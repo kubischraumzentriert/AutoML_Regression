@@ -1,0 +1,8 @@
+_artifacts/
+_targets/
+*.csv
+*.rds
+*.html
+.RData
+.Rhistory
+.Rproj.user/
