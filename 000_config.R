@@ -50,6 +50,7 @@ full_holdout_predictions_path <- file.path(artifact_dir, "full_holdout_confirmat
 submission_model_name <- "lightgbm_tuned"
 submission_model_algorithm <- "lightgbm"
 submission_path <- file.path(project_dir, "submission.csv")
+mean_submission_path <- file.path(project_dir, "submission_mean.csv")
 prediction_bounds <- c(0, 1)
 
 final_model_full_path <- function(model_name, run_id) {

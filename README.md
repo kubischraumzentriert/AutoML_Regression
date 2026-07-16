@@ -16,7 +16,8 @@ Das erste Referenzprojekt ist Kaggle Playground Series S5E10: Vorhersage von
 8. `120_full_holdout_confirmation.R` bestaetigt LightGBM, CatBoost und den festen OOF-Blend auf allen Daten per separatem 80/20-Holdout.
 9. `150_train_full_model.R` trainiert das gewaehlte Modell auf allen Daten.
 10. `155_predict_submission.R` schreibt die Kaggle-Submission.
-11. `160_log_kaggle_submission.R` protokolliert gemeldete Public-/Private-Scores in der SQLite-DB.
+11. `165_mean_submission.R` erzeugt im No-Signal-Fall eine Mittelwert-Submission.
+12. `160_log_kaggle_submission.R` protokolliert gemeldete Public-/Private-Scores fuer finale Modelle oder den Mittelwert in der SQLite-DB.
 
 Aktueller Finalkandidat fuer S5E10 ist getuntes LightGBM: Es gewann die
 unabhaengige Voll-Daten-Holdout-Bestaetigung gegen CatBoost und den OOF-Blend.
@@ -33,8 +34,10 @@ Ersatz. Wenn die CV-Mittelwertreferenz bereits auf dem Niveau von rpart,
 Ranger und mindestens einem nichtlinearen Boosting-Modell liegt, ist kein
 robustes nutzbares Feature-Signal nachgewiesen. In diesem Fall:
 
-1. Eine Mittelwert-Submission als externe Kalibrierung erzeugen und ihren
-   Kaggle-Score in `submission_result` speichern.
+1. Mit `165_mean_submission.R` eine Mittelwert-Submission als externe
+   Kalibrierung erzeugen; in `160_log_kaggle_submission.R`
+   `submission_candidate <- "target_mean"` setzen und ihren Kaggle-Score in
+   `submission_result` speichern.
 2. Bei Uebereinstimmung von CV und Leaderboard weder Hyperparameter-Tuning
    noch Ensembles oder zusaetzliche Modellfamilien starten.
 3. Erst mit zusaetzlichen, wettbewerbskonformen Informationen oder einer
