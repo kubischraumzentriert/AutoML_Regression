@@ -3,19 +3,21 @@ rm(list = ls())
 suppressPackageStartupMessages({
   library(data.table)
   library(mlr3)
+  library(mlr3extralearners)
+  library(mlr3pipelines)
 })
 
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
 
 db_con <- db_connect()
-model_path <- db_get_latest_model_artifact_path(db_con, submission_model_name)
+model_path <- db_get_latest_model_artifact_path(db_con, submission_model_algorithm)
 DBI::dbDisconnect(db_con)
 
 if (is.na(model_path) || !file.exists(model_path)) {
   source(file.path(project_dir, "150_train_full_model.R"))
   db_con <- db_connect()
-  model_path <- db_get_latest_model_artifact_path(db_con, submission_model_name)
+  model_path <- db_get_latest_model_artifact_path(db_con, submission_model_algorithm)
   DBI::dbDisconnect(db_con)
 }
 

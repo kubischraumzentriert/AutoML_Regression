@@ -19,6 +19,8 @@ seed <- 42
 subset_fraction <- 0.10
 validation_ratio <- 0.80
 cv_folds <- 5
+full_holdout_train_ratio <- 0.80
+full_holdout_seed <- 2026
 ranger_baseline_trees <- 100
 
 task_id_prefix <- paste0(target_col, "_", subset_fraction * 100, "pct")
@@ -26,6 +28,8 @@ task_id_prefix <- paste0(target_col, "_", subset_fraction * 100, "pct")
 artifact_dir <- file.path(project_dir, "_artifacts")
 experiments_db_path <- file.path(artifact_dir, "experiments.db")
 task_train_small_path <- file.path(artifact_dir, "task_train_small.rds")
+signal_diagnostics_path <- file.path(artifact_dir, "signal_diagnostics.csv")
+signal_correlations_path <- file.path(artifact_dir, "signal_correlations.csv")
 baseline_results_path <- file.path(artifact_dir, "baseline_results.csv")
 baseline_benchmark_path <- file.path(artifact_dir, "baseline_benchmark.rds")
 boosting_results_path <- file.path(artifact_dir, "boosting_results.csv")
@@ -38,8 +42,13 @@ lightgbm_tuning_final_results_path <- file.path(artifact_dir, "lightgbm_tuning_f
 lightgbm_tuning_instance_path <- file.path(artifact_dir, "lightgbm_tuning_instance.rds")
 ensemble_results_path <- file.path(artifact_dir, "ensemble_results.csv")
 ensemble_oof_predictions_path <- file.path(artifact_dir, "ensemble_oof_predictions.csv")
+ensemble_lightgbm_weight <- 0.60
+full_holdout_results_path <- file.path(artifact_dir, "full_holdout_confirmation_results.csv")
+full_holdout_predictions_path <- file.path(artifact_dir, "full_holdout_confirmation_predictions.csv")
 
-submission_model_name <- "ranger"
+# Der unabhaengige Voll-Holdout bestaetigte getuntes LightGBM als bestes Modell.
+submission_model_name <- "lightgbm_tuned"
+submission_model_algorithm <- "lightgbm"
 submission_path <- file.path(project_dir, "submission.csv")
 prediction_bounds <- c(0, 1)
 

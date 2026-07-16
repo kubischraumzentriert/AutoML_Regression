@@ -7,13 +7,19 @@ Das erste Referenzprojekt ist Kaggle Playground Series S5E10: Vorhersage von
 ## Bootstrap-Workflow
 
 1. `010_eda.R` prueft Datenstruktur, fehlende Werte und Zielvariable.
-2. `020_task.R` erstellt einen 10%-`TaskRegr` aus den Rohfeatures.
-3. `030_baseline.R` vergleicht rpart und Ranger (100 Baeume) per 5-facher CV.
-4. `080_boosting_benchmark.R` vergleicht LightGBM und CatBoost (je 200 Iterationen).
-5. `100_lightgbm_tuning.R` optimiert LightGBM per Bayesian Optimization und bestaetigt es per CV.
-6. `110_oof_ensemble.R` prueft eine OOF-Mischung aus getuntem LightGBM und CatBoost.
-7. `150_train_full_model.R` trainiert das gewaehlte Modell auf allen Daten.
-8. `155_predict_submission.R` schreibt die Kaggle-Submission.
+2. `015_signal_diagnostics.R` vergleicht die CV-Mittelwertreferenz mit dem Feature-Signal.
+3. `020_task.R` erstellt einen 10%-`TaskRegr` aus den Rohfeatures.
+4. `030_baseline.R` vergleicht rpart und Ranger (100 Baeume) per 5-facher CV.
+5. `080_boosting_benchmark.R` vergleicht LightGBM und CatBoost (je 200 Iterationen).
+6. `100_lightgbm_tuning.R` optimiert LightGBM per Bayesian Optimization und bestaetigt es per CV.
+7. `110_oof_ensemble.R` prueft eine OOF-Mischung aus getuntem LightGBM und CatBoost.
+8. `120_full_holdout_confirmation.R` bestaetigt LightGBM, CatBoost und den festen OOF-Blend auf allen Daten per separatem 80/20-Holdout.
+9. `150_train_full_model.R` trainiert das gewaehlte Modell auf allen Daten.
+10. `155_predict_submission.R` schreibt die Kaggle-Submission.
+11. `160_log_kaggle_submission.R` protokolliert gemeldete Public-/Private-Scores in der SQLite-DB.
+
+Aktueller Finalkandidat fuer S5E10 ist getuntes LightGBM: Es gewann die
+unabhaengige Voll-Daten-Holdout-Bestaetigung gegen CatBoost und den OOF-Blend.
 
 Alle Messungen werden in `_artifacts/experiments.db` im gleichen SQLite-Schema
 wie das Klassifikations-Template gespeichert. `merge_project_experiments.R`
@@ -31,3 +37,5 @@ Der Ensemble-Schritt speichert die OOF-Metriken aller getesteten Gewichte
 sowie die vollstaendigen OOF-Prognosen der beiden Basismodelle und der besten
 Mischung in der SQLite-DB. Ein OOF-Gewinn ist nur ein Kandidat; bevor das
 Ensemble fuer die Submission ausgewaehlt wird, wird er separat bestaetigt.
+`120_full_holdout_confirmation.R` ist diese Bestaetigung: Das zuvor bestimmte
+Gewicht wird nicht erneut auf dem Holdout optimiert.

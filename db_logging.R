@@ -227,6 +227,51 @@ db_create_resampling <- function(con, run_id, strategy, folds = NA_integer_, rat
   rsmp_id
 }
 
+# Speichert einen externen Submission-Score. Derselbe Modell-/Plattform-/Status-
+# Eintrag wird bei erneutem Ausfuehren aktualisiert statt doppelt angelegt.
+db_log_submission_result <- function(con, mconf_id, platform, competition, file_path,
+                                     status, metric_name, public_score = NA_real_,
+                                     private_score = NA_real_, notes = NA_character_) {
+  existing <- dbGetQuery(
+    con,
+    paste(
+      "SELECT subm_id FROM submission_result",
+      "WHERE subm_mconf_id = ? AND subm_platform = ? AND subm_status = ? AND subm_metric_name = ?"
+    ),
+    params = list(mconf_id, platform, status, metric_name)
+  )
+
+  if (nrow(existing) > 0) {
+    dbExecute(
+      con,
+      paste(
+        "UPDATE submission_result",
+        "SET subm_competition = ?, subm_file_path = ?, subm_public_score = ?,",
+        "subm_private_score = ?, subm_recorded_at = datetime('now'), subm_notes = ?",
+        "WHERE subm_id = ?"
+      ),
+      params = list(competition, file_path, public_score, private_score, notes, existing$subm_id[1])
+    )
+    return(invisible(existing$subm_id[1]))
+  }
+
+  subm_id <- uuid::UUIDgenerate()
+  dbExecute(
+    con,
+    paste(
+      "INSERT INTO submission_result",
+      "(subm_id, subm_mconf_id, subm_platform, subm_competition, subm_file_path,",
+      " subm_status, subm_metric_name, subm_public_score, subm_private_score, subm_notes)",
+      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    ),
+    params = list(
+      subm_id, mconf_id, platform, competition, file_path, status,
+      metric_name, public_score, private_score, notes
+    )
+  )
+  invisible(subm_id)
+}
+
 # Loggt Einzelvorhersagen (row_id, Wahrheit, Vorhersage, volle Wahrscheinlich-
 # keitsverteilung). Filtert NICHT selbst - der Aufrufer entscheidet, welche
 # Zeilen "interessant" genug sind (typischerweise: falsch klassifiziert oder
@@ -405,4 +450,21 @@ db_get_latest_model_artifact_path <- function(con, algorithm, workflow_name = "1
     return(NA_character_)
   }
   result$model_path[1]
+}
+
+db_get_latest_model_config_id <- function(con, algorithm, workflow_name = "150_train_full_model.R") {
+  result <- dbGetQuery(con, "
+    SELECT mc.mconf_id
+    FROM model_config mc
+    JOIN run r ON r.run_id = mc.mconf_run_id
+    JOIN workflow wf ON wf.wf_id = r.run_wf_id
+    WHERE mc.mconf_algorithm = ? AND wf.wf_name = ?
+    ORDER BY r.run_started_at DESC
+    LIMIT 1
+  ", params = list(algorithm, workflow_name))
+
+  if (nrow(result) == 0) {
+    return(NA_character_)
+  }
+  result$mconf_id[1]
 }

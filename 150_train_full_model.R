@@ -4,6 +4,7 @@ suppressPackageStartupMessages({
   library(data.table)
   library(mlr3)
   library(mlr3learners)
+  library(mlr3extralearners)
   library(mlr3pipelines)
 })
 
@@ -14,8 +15,8 @@ source(file.path(project_dir, "db_logging.R"))
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
 
-if (!identical(submission_model_name, "ranger")) {
-  stop("Der Bootstrap unterstuetzt aktuell nur submission_model_name = 'ranger'.")
+if (!submission_model_algorithm %in% c("ranger", "lightgbm")) {
+  stop("Unterstuetzte finale Algorithmen: ranger, lightgbm.")
 }
 
 train <- fread(train_path)
@@ -30,18 +31,39 @@ task_full <- as_task_regr(
   target = target_col,
   id = paste0(target_col, "_full_", submission_model_name)
 )
-learner_full <- make_imputed_learner(lrn(
-  "regr.ranger",
-  num.trees = ranger_baseline_trees,
-  respect.unordered.factors = "order",
-  seed = seed
-))
+
+if (identical(submission_model_algorithm, "ranger")) {
+  learner_full <- make_imputed_learner(lrn(
+    "regr.ranger", num.trees = ranger_baseline_trees,
+    respect.unordered.factors = "order", seed = seed
+  ))
+  final_hyperparams <- list(num_trees = ranger_baseline_trees)
+} else {
+  if (!file.exists(lightgbm_tuning_instance_path)) {
+    stop("LightGBM-Tuning fehlt. Bitte zuerst 100_lightgbm_tuning.R ausfuehren.")
+  }
+  tuning_instance <- readRDS(lightgbm_tuning_instance_path)
+  lightgbm_params <- tuning_instance$result_learner_param_vals
+  lightgbm_params <- lightgbm_params[grepl("^regr\\.lightgbm\\.", names(lightgbm_params))]
+  learner_full <- make_encoded_imputed_learner(lrn(
+    "regr.lightgbm", num_iterations = lightgbm_baseline_iterations,
+    learning_rate = 0.05, seed = seed, verbose = -1
+  ))
+  learner_full$param_set$values <- utils::modifyList(learner_full$param_set$values, lightgbm_params)
+  final_hyperparams <- stats::setNames(lightgbm_params, sub("^regr\\.lightgbm\\.", "", names(lightgbm_params)))
+}
+
+started <- proc.time()[["elapsed"]]
 learner_full$train(task_full)
+training_seconds <- proc.time()[["elapsed"]] - started
 
 db_con <- db_connect()
 db_proj_id <- db_get_or_create_project(db_con, project_name)
 db_wf_id <- db_get_or_create_workflow(db_con, db_proj_id, "script", "150_train_full_model.R")
-db_run_id <- db_create_run(db_con, db_wf_id, seed = seed, notes = "Finales Regressionstraining auf dem vollen Datensatz")
+db_run_id <- db_create_run(
+  db_con, db_wf_id, seed = seed,
+  notes = "Finales getuntes LightGBM auf dem vollen Datensatz; Auswahl per unabhaengigem Voll-Holdout"
+)
 model_path <- final_model_full_path(submission_model_name, db_run_id)
 
 saveRDS(
@@ -51,14 +73,16 @@ saveRDS(
 
 db_create_model_config(
   db_con, db_run_id,
-  task_type = "regr", algorithm = submission_model_name, feature_set = "raw",
-  preprocessing = "impute_median_mode", class_weight_power = NA_real_,
+  task_type = "regr", algorithm = submission_model_algorithm, feature_set = "raw",
+  preprocessing = "impute_median_mode_one_hot", class_weight_power = NA_real_,
   task_id = task_full$id,
-  hyperparams = list(num_trees = ranger_baseline_trees, model_artifact_path = model_path)
+  hyperparams = c(final_hyperparams, list(model_artifact_path = model_path, training_seconds = training_seconds))
 )
 db_finish_run(db_con, db_run_id)
 DBI::dbDisconnect(db_con)
 
 cat("=== Finales Regressionstraining ===\n")
+cat("Modell:", submission_model_name, "\n")
+cat("Trainingszeit:", round(training_seconds, 1), "s\n")
 cat("Gespeichert:", model_path, "\n")
 cat("Experiment-DB:", experiments_db_path, "(run_id", db_run_id, ")\n")

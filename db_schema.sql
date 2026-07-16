@@ -97,6 +97,26 @@ CREATE TABLE IF NOT EXISTS metric_result (
   mres_elapsed_seconds REAL
 );
 
+-- Externe Submission-Ergebnisse (z.B. Kaggle Public/Private Leaderboard)
+-- werden am konkreten finalen Modell statt an einem lokalen Resampling
+-- protokolliert. Damit bleiben lokale Validierung und externe Bewertung
+-- getrennt, aber nachvollziehbar verknuepft.
+CREATE TABLE IF NOT EXISTS submission_result (
+  subm_seq INTEGER PRIMARY KEY,
+  subm_id TEXT NOT NULL UNIQUE,
+  subm_mconf_id TEXT NOT NULL REFERENCES model_config (mconf_id),
+  subm_platform TEXT NOT NULL,
+  subm_competition TEXT,
+  subm_file_path TEXT,
+  subm_status TEXT NOT NULL CHECK (subm_status IN ('submitted', 'late_submission')),
+  subm_metric_name TEXT NOT NULL,
+  subm_public_score REAL,
+  subm_private_score REAL,
+  subm_recorded_at TEXT NOT NULL DEFAULT (datetime('now')),
+  subm_notes TEXT,
+  UNIQUE (subm_mconf_id, subm_platform, subm_status, subm_metric_name)
+);
+
 -- Zeilenebene fuer einzelne Vorhersagen - bewusst NICHT fuer jede Model-Config
 -- befuellt (waere bei CV ueber alle Zeilen x alle Konfigurationen viel zu
 -- gross), sondern nur fuer die "interessanten" Faelle: falsch klassifiziert
@@ -137,6 +157,7 @@ CREATE INDEX IF NOT EXISTS idx_resampling_run ON resampling (rsmp_run_id);
 CREATE INDEX IF NOT EXISTS idx_hyperparam_mconf ON hyperparam (hparam_mconf_id);
 CREATE INDEX IF NOT EXISTS idx_metric_result_mconf ON metric_result (mres_mconf_id);
 CREATE INDEX IF NOT EXISTS idx_metric_result_rsmp ON metric_result (mres_rsmp_id);
+CREATE INDEX IF NOT EXISTS idx_submission_result_mconf ON submission_result (subm_mconf_id);
 CREATE INDEX IF NOT EXISTS idx_prediction_mconf ON prediction (pred_mconf_id);
 CREATE INDEX IF NOT EXISTS idx_prediction_rsmp ON prediction (pred_rsmp_id);
 CREATE INDEX IF NOT EXISTS idx_prediction_row ON prediction (pred_row_id);
@@ -321,3 +342,26 @@ JOIN run r ON r.run_id = mc.mconf_run_id
 JOIN workflow wf ON wf.wf_id = r.run_wf_id
 JOIN project p ON p.proj_id = wf.wf_proj_id
 WHERE mc.mconf_task_type = 'regr';
+
+-- Externe Leaderboard-Scores mit Modell- und Run-Kontext.
+CREATE VIEW IF NOT EXISTS v_submission_results AS
+SELECT
+  p.proj_name,
+  wf.wf_name,
+  r.run_id,
+  mc.mconf_id,
+  mc.mconf_algorithm,
+  sr.subm_platform,
+  sr.subm_competition,
+  sr.subm_status,
+  sr.subm_metric_name,
+  sr.subm_public_score,
+  sr.subm_private_score,
+  sr.subm_file_path,
+  sr.subm_recorded_at,
+  sr.subm_notes
+FROM submission_result sr
+JOIN model_config mc ON mc.mconf_id = sr.subm_mconf_id
+JOIN run r ON r.run_id = mc.mconf_run_id
+JOIN workflow wf ON wf.wf_id = r.run_wf_id
+JOIN project p ON p.proj_id = wf.wf_proj_id;
