@@ -301,3 +301,23 @@ SELECT * FROM (
   WHERE rmse IS NOT NULL
 )
 WHERE rn = 1;
+
+-- Vollstaendige OOF-Vorhersagen fuer Regression mit direkt nutzbarem Fehler.
+CREATE VIEW IF NOT EXISTS v_regr_prediction_detail AS
+SELECT
+  p.proj_name,
+  wf.wf_name,
+  r.run_id,
+  mc.mconf_id,
+  mc.mconf_algorithm,
+  pr.pred_row_id,
+  pr.pred_fold,
+  CAST(pr.pred_truth AS REAL) AS truth,
+  CAST(pr.pred_response AS REAL) AS response,
+  CAST(pr.pred_response AS REAL) - CAST(pr.pred_truth AS REAL) AS residual
+FROM prediction pr
+JOIN model_config mc ON mc.mconf_id = pr.pred_mconf_id
+JOIN run r ON r.run_id = mc.mconf_run_id
+JOIN workflow wf ON wf.wf_id = r.run_wf_id
+JOIN project p ON p.proj_id = wf.wf_proj_id
+WHERE mc.mconf_task_type = 'regr';

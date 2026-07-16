@@ -28,6 +28,16 @@ experiments_db_path <- file.path(artifact_dir, "experiments.db")
 task_train_small_path <- file.path(artifact_dir, "task_train_small.rds")
 baseline_results_path <- file.path(artifact_dir, "baseline_results.csv")
 baseline_benchmark_path <- file.path(artifact_dir, "baseline_benchmark.rds")
+boosting_results_path <- file.path(artifact_dir, "boosting_results.csv")
+boosting_benchmark_path <- file.path(artifact_dir, "boosting_benchmark.rds")
+lightgbm_baseline_iterations <- 200
+catboost_baseline_iterations <- 200
+lightgbm_tuning_evals <- 20
+lightgbm_tuning_search_results_path <- file.path(artifact_dir, "lightgbm_tuning_search_results.csv")
+lightgbm_tuning_final_results_path <- file.path(artifact_dir, "lightgbm_tuning_final_results.csv")
+lightgbm_tuning_instance_path <- file.path(artifact_dir, "lightgbm_tuning_instance.rds")
+ensemble_results_path <- file.path(artifact_dir, "ensemble_results.csv")
+ensemble_oof_predictions_path <- file.path(artifact_dir, "ensemble_oof_predictions.csv")
 
 submission_model_name <- "ranger"
 submission_path <- file.path(project_dir, "submission.csv")
@@ -38,7 +48,7 @@ final_model_full_path <- function(model_name, run_id) {
 }
 
 algorithm_from_learner_id <- function(learner_id) {
-  algorithms <- c("rpart", "ranger")
+  algorithms <- c("rpart", "ranger", "lightgbm", "catboost")
   matched <- algorithms[vapply(algorithms, function(algorithm) {
     grepl(paste0("regr\\.", algorithm), learner_id)
   }, logical(1))]

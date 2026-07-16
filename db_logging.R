@@ -276,6 +276,39 @@ db_log_predictions <- function(con, mconf_id, rsmp_id, row_ids, truth, response,
   invisible(pred_seqs)
 }
 
+# Speichert numerische Regressionsvorhersagen ohne die rein klassifikations-
+# spezifische probability-Tabelle. Die gemeinsame prediction-Tabelle bleibt
+# damit fuer beide Workflow-Typen nutzbar.
+db_log_regression_predictions <- function(con, mconf_id, rsmp_id, row_ids, truth, response,
+                                          fold = NA_integer_) {
+  n <- length(row_ids)
+  if (length(truth) != n || length(response) != n) {
+    stop("row_ids, truth und response muessen gleich lang sein.")
+  }
+
+  fold_vec <- if (length(fold) == 1) rep(fold, n) else fold
+  if (length(fold_vec) != n) {
+    stop("fold muss ein Wert oder ein Vektor gleicher Laenge wie row_ids sein.")
+  }
+
+  dbBegin(con)
+  current_max <- dbGetQuery(con, "SELECT COALESCE(MAX(pred_seq), 0) AS m FROM prediction")$m
+  pred_seqs <- current_max + seq_len(n)
+  dbAppendTable(con, "prediction", data.frame(
+    pred_seq = pred_seqs,
+    pred_mconf_id = mconf_id,
+    pred_rsmp_id = rsmp_id,
+    pred_row_id = as.integer(row_ids),
+    pred_fold = as.integer(fold_vec),
+    pred_truth = as.character(as.numeric(truth)),
+    pred_response = as.character(as.numeric(response)),
+    stringsAsFactors = FALSE
+  ))
+  dbCommit(con)
+
+  invisible(pred_seqs)
+}
+
 db_log_metric_result <- function(con, mconf_id, rsmp_id, measure_name, value, fold = NA_integer_,
                                   elapsed_seconds = NA_real_) {
   dbExecute(
