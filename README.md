@@ -26,6 +26,24 @@ wie das Klassifikations-Template gespeichert. `merge_project_experiments.R`
 kann projektlokale Datenbanken spaeter in eine zentrale Vergleichsdatenbank
 uebernehmen.
 
+## Signal-Gate und Stop-Regel
+
+`015_signal_diagnostics.R` ist ein frueher Entscheidungscheck, kein Modell-
+Ersatz. Wenn die CV-Mittelwertreferenz bereits auf dem Niveau von rpart,
+Ranger und mindestens einem nichtlinearen Boosting-Modell liegt, ist kein
+robustes nutzbares Feature-Signal nachgewiesen. In diesem Fall:
+
+1. Eine Mittelwert-Submission als externe Kalibrierung erzeugen und ihren
+   Kaggle-Score in `submission_result` speichern.
+2. Bei Uebereinstimmung von CV und Leaderboard weder Hyperparameter-Tuning
+   noch Ensembles oder zusaetzliche Modellfamilien starten.
+3. Erst mit zusaetzlichen, wettbewerbskonformen Informationen oder einer
+   veraenderten Feature-Repraesentation erneut experimentieren.
+
+Die Regel verhindert blindes Tuning, ist aber bewusst keine harte
+Automatik: Ein auffaelliger Unterschied zwischen lokaler CV und Leaderboard
+erfordert zuerst eine Pruefung von Split, Daten und Leakage.
+
 ## Abgrenzung
 
 Klassenspezifische Bausteine wie Stratifizierung, Klassengewichte, ROC/PR,
