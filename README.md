@@ -27,6 +27,9 @@ wie das Klassifikations-Template gespeichert. `merge_project_experiments.R`
 kann projektlokale Datenbanken spaeter in eine zentrale Vergleichsdatenbank
 uebernehmen.
 
+Die Tabellen, Beziehungen, Laufzeit-Semantik und Abfrage-Views sind in
+[`DATABASE.md`](DATABASE.md) beschrieben.
+
 ## Signal-Gate und Stop-Regel
 
 `015_signal_diagnostics.R` ist ein frueher Entscheidungscheck, kein Modell-
