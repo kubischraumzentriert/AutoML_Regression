@@ -48,8 +48,8 @@ numeric_features <- names(feature_data)[vapply(feature_data, is.numeric, logical
 correlations <- rbindlist(lapply(numeric_features, function(feature) {
   data.table(
     feature = feature,
-    pearson = cor(feature_data[[feature]], truth, method = "pearson"),
-    spearman = cor(feature_data[[feature]], truth, method = "spearman")
+    pearson = cor(feature_data[[feature]], truth, method = "pearson", use = "pairwise.complete.obs"),
+    spearman = cor(feature_data[[feature]], truth, method = "spearman", use = "pairwise.complete.obs")
   )
 }))
 correlations[, abs_pearson := abs(pearson)]
@@ -64,8 +64,8 @@ diagnostics <- data.table(
   regr.rsq = aggregate_metrics[["regr.rsq"]],
   n_numeric_features = length(numeric_features),
   n_non_numeric_features = length(task_train_small$feature_names) - length(numeric_features),
-  max_abs_pearson = if (nrow(correlations) > 0) max(abs(correlations$pearson)) else NA_real_,
-  max_abs_spearman = if (nrow(correlations) > 0) max(abs(correlations$spearman)) else NA_real_
+  max_abs_pearson = if (any(!is.na(correlations$pearson))) max(abs(correlations$pearson), na.rm = TRUE) else NA_real_,
+  max_abs_spearman = if (any(!is.na(correlations$spearman))) max(abs(correlations$spearman), na.rm = TRUE) else NA_real_
 )
 fwrite(diagnostics, signal_diagnostics_path)
 fwrite(correlations, signal_correlations_path)
