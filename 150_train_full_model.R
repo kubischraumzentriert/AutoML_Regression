@@ -10,6 +10,7 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "040_preprocessing.R"))
+source(file.path(project_dir, "045_lightgbm_selection.R"))
 source(file.path(project_dir, "db_logging.R"))
 
 set.seed(seed)
@@ -39,18 +40,9 @@ if (identical(submission_model_algorithm, "ranger")) {
   ))
   final_hyperparams <- list(num_trees = ranger_baseline_trees)
 } else {
-  if (!file.exists(lightgbm_tuning_instance_path)) {
-    stop("LightGBM-Tuning fehlt. Bitte zuerst 100_lightgbm_tuning.R ausfuehren.")
-  }
-  tuning_instance <- readRDS(lightgbm_tuning_instance_path)
-  lightgbm_params <- tuning_instance$result_learner_param_vals
-  lightgbm_params <- lightgbm_params[grepl("^regr\\.lightgbm\\.", names(lightgbm_params))]
-  learner_full <- make_encoded_imputed_learner(lrn(
-    "regr.lightgbm", num_iterations = lightgbm_baseline_iterations,
-    learning_rate = 0.05, seed = seed, verbose = -1
-  ))
-  learner_full$param_set$values <- utils::modifyList(learner_full$param_set$values, lightgbm_params)
-  final_hyperparams <- stats::setNames(lightgbm_params, sub("^regr\\.lightgbm\\.", "", names(lightgbm_params)))
+  lightgbm_selection <- read_lightgbm_selection()
+  learner_full <- make_selected_lightgbm(lightgbm_selection)
+  final_hyperparams <- selected_lightgbm_hyperparams(lightgbm_selection)
 }
 
 started <- proc.time()[["elapsed"]]
@@ -62,7 +54,7 @@ db_proj_id <- db_get_or_create_project(db_con, project_name)
 db_wf_id <- db_get_or_create_workflow(db_con, db_proj_id, "script", "150_train_full_model.R")
 db_run_id <- db_create_run(
   db_con, db_wf_id, seed = seed,
-  notes = "Finales getuntes LightGBM auf dem vollen Datensatz; Auswahl per unabhaengigem Voll-Holdout"
+  notes = "Finales LightGBM auf dem vollen Datensatz; Variante per 100_lightgbm_tuning.R gewaehlt"
 )
 model_path <- final_model_full_path(submission_model_name, db_run_id)
 

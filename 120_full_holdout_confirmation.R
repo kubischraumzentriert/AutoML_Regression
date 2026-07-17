@@ -9,13 +9,10 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "040_preprocessing.R"))
+source(file.path(project_dir, "045_lightgbm_selection.R"))
 source(file.path(project_dir, "db_logging.R"))
 
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
-if (!file.exists(lightgbm_tuning_instance_path)) {
-  stop("LightGBM-Tuning fehlt. Bitte zuerst 100_lightgbm_tuning.R ausfuehren.")
-}
-
 train <- fread(train_path)
 train[, (id_col) := NULL]
 feature_char_cols <- setdiff(names(train)[vapply(train, is.character, logical(1))], target_col)
@@ -23,24 +20,10 @@ train[, (feature_char_cols) := lapply(.SD, as.factor), .SDcols = feature_char_co
 train[, (target_col) := as.numeric(get(target_col))]
 task_full <- as_task_regr(train, target = target_col, id = paste0(target_col, "_full_holdout"))
 
-tuning_instance <- readRDS(lightgbm_tuning_instance_path)
-lightgbm_params <- tuning_instance$result_learner_param_vals
-lightgbm_params <- lightgbm_params[grepl("^regr\\.lightgbm\\.", names(lightgbm_params))]
+lightgbm_selection <- read_lightgbm_selection()
 blend_weight_lightgbm <- ensemble_lightgbm_weight
 if (is.na(blend_weight_lightgbm) || blend_weight_lightgbm < 0 || blend_weight_lightgbm > 1) {
   stop("ensemble_lightgbm_weight muss nach dem OOF-Schritt zwischen 0 und 1 gesetzt werden.")
-}
-
-make_tuned_lightgbm <- function() {
-  learner <- make_encoded_imputed_learner(lrn(
-    "regr.lightgbm",
-    num_iterations = lightgbm_baseline_iterations,
-    learning_rate = 0.05,
-    seed = seed,
-    verbose = -1
-  ))
-  learner$param_set$values <- utils::modifyList(learner$param_set$values, lightgbm_params)
-  learner
 }
 
 make_catboost <- function() {
@@ -80,7 +63,7 @@ fit_and_predict <- function(learner_factory, label) {
   list(response = prediction, elapsed_seconds = elapsed_seconds)
 }
 
-lightgbm_result <- fit_and_predict(make_tuned_lightgbm, "LightGBM")
+lightgbm_result <- fit_and_predict(make_selected_lightgbm, "LightGBM")
 catboost_result <- fit_and_predict(make_catboost, "CatBoost")
 blend_response <- blend_weight_lightgbm * lightgbm_result$response +
   (1 - blend_weight_lightgbm) * catboost_result$response
@@ -97,7 +80,7 @@ setorder(results, regr.rmse)
 holdout_predictions <- data.table(
   row_id = test_ids,
   truth = truth,
-  lightgbm_tuned = lightgbm_result$response,
+  lightgbm_selected = lightgbm_result$response,
   catboost = catboost_result$response,
   blend_fixed_60_40 = blend_response
 )
@@ -136,10 +119,8 @@ log_holdout_model <- function(algorithm, response, elapsed_seconds, hyperparams)
   db_log_regression_predictions(db_con, mconf_id, db_rsmp_id, test_ids, truth, response)
 }
 
-tuned_hyperparams <- lightgbm_params
-names(tuned_hyperparams) <- sub("^regr\\.lightgbm\\.", "", names(tuned_hyperparams))
 log_holdout_model("lightgbm", lightgbm_result$response, lightgbm_result$elapsed_seconds,
-                  tuned_hyperparams)
+                  selected_lightgbm_hyperparams(lightgbm_selection))
 log_holdout_model("catboost", catboost_result$response, catboost_result$elapsed_seconds,
                   list(iterations = catboost_baseline_iterations, learning_rate = 0.05))
 log_holdout_model("blend_lightgbm_catboost", blend_response, NA_real_, list(

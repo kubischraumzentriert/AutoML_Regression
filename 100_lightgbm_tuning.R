@@ -90,6 +90,20 @@ final_results <- timed_benchmark$results[
 ]
 fwrite(final_results, lightgbm_tuning_final_results_path)
 
+default_rmse <- final_results[learner_id == "lightgbm_default", get(primary_measure_id)]
+tuned_rmse <- final_results[learner_id == "lightgbm_tuned", get(primary_measure_id)]
+selected_variant <- if (default_rmse <= tuned_rmse) "default" else "tuned"
+saveRDS(
+  list(
+    variant = selected_variant,
+    selection_measure = primary_measure_id,
+    default_rmse = default_rmse,
+    tuned_rmse = tuned_rmse,
+    tuned_params = lightgbm_params
+  ),
+  lightgbm_selection_path
+)
+
 db_con <- db_connect()
 db_proj_id <- db_get_or_create_project(db_con, project_name)
 db_wf_id <- db_get_or_create_workflow(db_con, db_proj_id, "script", "100_lightgbm_tuning.R")
@@ -156,8 +170,10 @@ cat("Beste Suchkonfiguration:\n")
 print(best_params)
 cat("\nFinalvergleich:\n")
 print(final_results)
+cat("\nAusgewaehlte LightGBM-Variante:", selected_variant, "\n")
 cat("\nGespeichert:\n")
 cat("Suchergebnisse:", lightgbm_tuning_search_results_path, "\n")
 cat("Finalvergleich :", lightgbm_tuning_final_results_path, "\n")
 cat("Tuning-Instanz :", lightgbm_tuning_instance_path, "\n")
+cat("Auswahl        :", lightgbm_selection_path, "\n")
 cat("Experiment-DB  :", experiments_db_path, "\n")

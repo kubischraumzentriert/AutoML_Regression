@@ -40,14 +40,16 @@ lightgbm_tuning_evals <- 20
 lightgbm_tuning_search_results_path <- file.path(artifact_dir, "lightgbm_tuning_search_results.csv")
 lightgbm_tuning_final_results_path <- file.path(artifact_dir, "lightgbm_tuning_final_results.csv")
 lightgbm_tuning_instance_path <- file.path(artifact_dir, "lightgbm_tuning_instance.rds")
+lightgbm_selection_path <- file.path(artifact_dir, "lightgbm_selection.rds")
 ensemble_results_path <- file.path(artifact_dir, "ensemble_results.csv")
 ensemble_oof_predictions_path <- file.path(artifact_dir, "ensemble_oof_predictions.csv")
 ensemble_lightgbm_weight <- 0.60
 full_holdout_results_path <- file.path(artifact_dir, "full_holdout_confirmation_results.csv")
 full_holdout_predictions_path <- file.path(artifact_dir, "full_holdout_confirmation_predictions.csv")
 
-# Der unabhaengige Voll-Holdout bestaetigte getuntes LightGBM als bestes Modell.
-submission_model_name <- "lightgbm_tuned"
+# `100_lightgbm_tuning.R` bestimmt die Variante per CV und speichert sie in
+# `lightgbm_selection_path`; nachfolgende Schritte lesen dieses Artefakt.
+submission_model_name <- "lightgbm_selected"
 submission_model_algorithm <- "lightgbm"
 submission_path <- file.path(project_dir, "submission.csv")
 mean_submission_path <- file.path(project_dir, "submission_mean.csv")

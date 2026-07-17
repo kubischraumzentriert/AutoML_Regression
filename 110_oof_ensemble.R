@@ -9,6 +9,7 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "040_preprocessing.R"))
+source(file.path(project_dir, "045_lightgbm_selection.R"))
 source(file.path(project_dir, "db_logging.R"))
 
 set.seed(seed)
@@ -17,28 +18,8 @@ dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
 if (!file.exists(task_train_small_path)) {
   source(file.path(project_dir, "020_task.R"))
 }
-if (!file.exists(lightgbm_tuning_instance_path)) {
-  stop("LightGBM-Tuning fehlt. Bitte zuerst 100_lightgbm_tuning.R ausfuehren.")
-}
-
 task_train_small <- readRDS(task_train_small_path)
-tuning_instance <- readRDS(lightgbm_tuning_instance_path)
-lightgbm_params <- tuning_instance$result_learner_param_vals
-# Pipeline-Parameter sind bereits im Learner gesetzt. Nur die getunten
-# LightGBM-Parameter gehoeren in die Wiederherstellung und das DB-Logging.
-lightgbm_params <- lightgbm_params[grepl("^regr\\.lightgbm\\.", names(lightgbm_params))]
-
-make_tuned_lightgbm <- function() {
-  learner <- make_encoded_imputed_learner(lrn(
-    "regr.lightgbm",
-    num_iterations = lightgbm_baseline_iterations,
-    learning_rate = 0.05,
-    seed = seed,
-    verbose = -1
-  ))
-  learner$param_set$values <- utils::modifyList(learner$param_set$values, lightgbm_params)
-  learner
-}
+lightgbm_selection <- read_lightgbm_selection()
 
 make_catboost <- function() {
   make_encoded_imputed_learner(lrn(
@@ -93,7 +74,7 @@ make_oof_predictions <- function(learner_factory, label) {
   )
 }
 
-lightgbm_oof <- make_oof_predictions(make_tuned_lightgbm, "LightGBM")
+lightgbm_oof <- make_oof_predictions(make_selected_lightgbm, "LightGBM")
 catboost_oof <- make_oof_predictions(make_catboost, "CatBoost")
 
 stopifnot(
@@ -121,7 +102,7 @@ oof_predictions <- data.table(
   row_id = lightgbm_oof$row_id,
   fold = lightgbm_oof$fold,
   truth = lightgbm_oof$truth,
-  lightgbm_tuned = lightgbm_oof$response,
+  lightgbm_selected = lightgbm_oof$response,
   catboost = catboost_oof$response,
   blend_best = best_response
 )
@@ -133,7 +114,7 @@ db_proj_id <- db_get_or_create_project(db_con, project_name)
 db_wf_id <- db_get_or_create_workflow(db_con, db_proj_id, "script", "110_oof_ensemble.R")
 db_run_id <- db_create_run(
   db_con, db_wf_id, seed = seed,
-  notes = "OOF-Ensemble: getuntes LightGBM und CatBoost, Gewichtsgrid 0.00 bis 1.00"
+  notes = paste("OOF-Ensemble:", lightgbm_selection$variant, "LightGBM und CatBoost, Gewichtsgrid 0.00 bis 1.00")
 )
 db_log_run_config(db_con, db_run_id, list(
   cv_folds = cv_folds,
@@ -170,11 +151,9 @@ log_oof_model <- function(algorithm, response, elapsed_seconds, hyperparams, sav
   mconf_id
 }
 
-tuned_hyperparams <- lightgbm_params
-names(tuned_hyperparams) <- sub("^regr\\.lightgbm\\.", "", names(tuned_hyperparams))
-tuned_hyperparams$num_iterations <- lightgbm_baseline_iterations
+selected_hyperparams <- selected_lightgbm_hyperparams(lightgbm_selection)
 log_oof_model("lightgbm", lightgbm_oof$response, lightgbm_oof$elapsed_seconds,
-              tuned_hyperparams, save_predictions = TRUE)
+              selected_hyperparams, save_predictions = TRUE)
 log_oof_model("catboost", catboost_oof$response, catboost_oof$elapsed_seconds, list(
   iterations = catboost_baseline_iterations, learning_rate = 0.05
 ), save_predictions = TRUE)
