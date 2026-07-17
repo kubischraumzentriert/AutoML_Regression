@@ -24,6 +24,13 @@ if (!file.exists(task_train_small_path)) {
 
 task_train_small <- readRDS(task_train_small_path)
 
+db_con <- db_connect()
+estimate_tuning_runtime(
+  db_con, project_name, "lightgbm", task_train_small$id,
+  primary_measure_id, lightgbm_tuning_evals
+)
+DBI::dbDisconnect(db_con)
+
 make_lightgbm_learner <- function(id) {
   learner <- make_encoded_imputed_learner(lrn(
     "regr.lightgbm",
@@ -114,7 +121,10 @@ for (i in seq_len(nrow(archive_dt))) {
       bagging_fraction = row$regr.lightgbm.bagging_fraction
     )
   )
-  db_log_metric_result(db_con, mconf_id, db_rsmp_search_id, primary_measure_id, row[[primary_measure_id]])
+  db_log_metric_result(
+    db_con, mconf_id, db_rsmp_search_id, primary_measure_id,
+    row[[primary_measure_id]], elapsed_seconds = row$runtime_learners
+  )
 }
 
 tuned_hyperparams <- lightgbm_params

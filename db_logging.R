@@ -117,6 +117,38 @@ estimate_cv_runtime <- function(con, project_name, algorithm, folds, feature_set
   invisible(estimate_seconds)
 }
 
+# Empirische Schätzung für die nächste Tuning-Suche aus ihren bisherigen
+# Einzelkonfigurationen. P90 zeigt bewusst auch langsamere Kombinationen.
+estimate_tuning_runtime <- function(con, project_name, algorithm, task_id, measure_name, n_evals) {
+  elapsed <- dbGetQuery(con, "
+    SELECT mr.mres_elapsed_seconds AS elapsed_seconds
+    FROM metric_result mr
+    JOIN model_config mc ON mc.mconf_id = mr.mres_mconf_id
+    JOIN resampling rs ON rs.rsmp_id = mr.mres_rsmp_id
+    JOIN run r ON r.run_id = mc.mconf_run_id
+    JOIN workflow wf ON wf.wf_id = r.run_wf_id
+    JOIN project p ON p.proj_id = wf.wf_proj_id
+    WHERE p.proj_name = ? AND wf.wf_name = '100_lightgbm_tuning.R'
+      AND mc.mconf_algorithm = ? AND mc.mconf_task_id = ?
+      AND rs.rsmp_strategy = 'holdout' AND mr.mres_measure_name = ?
+      AND mr.mres_elapsed_seconds IS NOT NULL
+  ", params = list(project_name, algorithm, task_id, measure_name))$elapsed_seconds
+
+  if (length(elapsed) == 0) {
+    cat("Keine gemessenen Tuning-Konfigurationen; Laufzeit nach diesem Lauf erneut schaetzen.\n")
+    return(invisible(NA_real_))
+  }
+
+  median_seconds <- stats::median(elapsed)
+  p90_seconds <- as.numeric(stats::quantile(elapsed, 0.90, names = FALSE))
+  cat(
+    "Laufzeitschaetzung fuer ", n_evals, " Tuning-Evaluierungen: ~",
+    round(n_evals * median_seconds), "s (Median) bis ~", round(n_evals * p90_seconds),
+    "s (P90), basierend auf ", length(elapsed), " Konfigurationen.\n", sep = ""
+  )
+  invisible(c(median_seconds = median_seconds, p90_seconds = p90_seconds))
+}
+
 get_git_commit <- function() {
   result <- tryCatch(
     system2("git", c("rev-parse", "HEAD"), stdout = TRUE, stderr = FALSE),

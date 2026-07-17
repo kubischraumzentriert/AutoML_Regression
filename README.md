@@ -47,6 +47,10 @@ Die Regel verhindert blindes Tuning, ist aber bewusst keine harte
 Automatik: Ein auffaelliger Unterschied zwischen lokaler CV und Leaderboard
 erfordert zuerst eine Pruefung von Split, Daten und Leakage.
 
+Tuning-Suchen speichern die Laufzeit jeder Konfiguration mit ihren
+Hyperparametern. Vor einem Folge-Lauf gibt `estimate_tuning_runtime()` eine
+Median-/P90-Schaetzung aus den bereits gemessenen Konfigurationen aus.
+
 ## Abgrenzung
 
 Klassenspezifische Bausteine wie Stratifizierung, Klassengewichte, ROC/PR,
