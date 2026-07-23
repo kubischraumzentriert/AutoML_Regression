@@ -30,6 +30,17 @@ experiments_db_path <- file.path(artifact_dir, "experiments.db")
 task_train_small_path <- file.path(artifact_dir, "task_train_small.rds")
 signal_diagnostics_path <- file.path(artifact_dir, "signal_diagnostics.csv")
 signal_correlations_path <- file.path(artifact_dir, "signal_correlations.csv")
+feature_availability_summary_path <- file.path(artifact_dir, "feature_availability_summary.csv")
+feature_availability_missingness_path <- file.path(artifact_dir, "feature_availability_missingness.csv")
+feature_availability_report_path <- file.path(artifact_dir, "feature_availability_report.txt")
+feature_availability_sentinel_values <- c(-999, -9999, 999, 9999)
+
+adversarial_validation_sample_n <- 150000L
+adversarial_validation_folds <- 3L
+adversarial_validation_results_path <- file.path(artifact_dir, "adversarial_validation_results.csv")
+adversarial_validation_prediction_path <- file.path(artifact_dir, "adversarial_validation_predictions.csv")
+adversarial_exclude_cols <- c(id_col, target_col)
+
 baseline_results_path <- file.path(artifact_dir, "baseline_results.csv")
 baseline_benchmark_path <- file.path(artifact_dir, "baseline_benchmark.rds")
 boosting_results_path <- file.path(artifact_dir, "boosting_results.csv")
@@ -46,6 +57,8 @@ ensemble_oof_predictions_path <- file.path(artifact_dir, "ensemble_oof_predictio
 ensemble_lightgbm_weight <- 0.60
 full_holdout_results_path <- file.path(artifact_dir, "full_holdout_confirmation_results.csv")
 full_holdout_predictions_path <- file.path(artifact_dir, "full_holdout_confirmation_predictions.csv")
+segment_metric_cols <- character()
+segment_metrics_path <- file.path(artifact_dir, "segment_metrics.csv")
 
 # `100_lightgbm_tuning.R` bestimmt die Variante per CV und speichert sie in
 # `lightgbm_selection_path`; nachfolgende Schritte lesen dieses Artefakt.
@@ -54,6 +67,17 @@ submission_model_algorithm <- "lightgbm"
 submission_path <- file.path(project_dir, "submission.csv")
 mean_submission_path <- file.path(project_dir, "submission_mean.csv")
 prediction_bounds <- c(0, 1)
+reference_submission_path <- NA_character_
+submission_diff_check_path <- file.path(artifact_dir, "submission_diff_check.csv")
+
+# Externe Quellen fuer Feature-Engineering bewusst klassifizieren. Werte:
+# "allowed_input", "inspiration_only", "blocked_or_unclear".
+external_source_policy <- data.frame(
+  source = character(),
+  policy = character(),
+  notes = character(),
+  stringsAsFactors = FALSE
+)
 
 final_model_full_path <- function(model_name, run_id) {
   file.path(artifact_dir, paste0("final_model_", model_name, "_full_", run_id, ".rds"))

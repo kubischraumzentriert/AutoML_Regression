@@ -7,17 +7,25 @@ Das erste Referenzprojekt ist Kaggle Playground Series S5E10: Vorhersage von
 ## Bootstrap-Workflow
 
 1. `010_eda.R` prueft Datenstruktur, fehlende Werte und Zielvariable.
-2. `015_signal_diagnostics.R` vergleicht die CV-Mittelwertreferenz mit dem Feature-Signal.
-3. `020_task.R` erstellt einen 10%-`TaskRegr` aus den Rohfeatures.
-4. `030_baseline.R` vergleicht rpart und Ranger (100 Baeume) per 5-facher CV.
-5. `080_boosting_benchmark.R` vergleicht LightGBM und CatBoost (je 200 Iterationen).
-6. `100_lightgbm_tuning.R` optimiert LightGBM per Bayesian Optimization, vergleicht es mit dem Standard-LightGBM per CV und speichert die bessere Variante.
-7. `110_oof_ensemble.R` prueft eine OOF-Mischung aus der zuvor gewaehlten LightGBM-Variante und CatBoost.
-8. `120_full_holdout_confirmation.R` bestaetigt die zuvor gewaehlte LightGBM-Variante, CatBoost und den festen OOF-Blend auf allen Daten per separatem 80/20-Holdout.
-9. `150_train_full_model.R` trainiert die zuvor gewaehlte LightGBM-Variante auf allen Daten.
-10. `155_predict_submission.R` schreibt die Kaggle-Submission.
-11. `165_mean_submission.R` erzeugt im No-Signal-Fall eine Mittelwert-Submission.
-12. `160_log_kaggle_submission.R` protokolliert gemeldete Public-/Private-Scores fuer finale Modelle oder den Mittelwert in der SQLite-DB.
+2. `012_feature_availability_audit.R` vergleicht Train/Test-Spalten,
+   Missingness, Sentinel-Werte und externe Quellen-Konventionen.
+3. `015_signal_diagnostics.R` vergleicht die CV-Mittelwertreferenz mit dem Feature-Signal.
+4. `018_adversarial_validation.R` misst, wie gut Train/Test anhand der Features
+   unterscheidbar sind.
+5. `020_task.R` erstellt einen 10%-`TaskRegr` aus den Rohfeatures.
+6. `030_baseline.R` vergleicht rpart und Ranger (100 Baeume) per 5-facher CV.
+7. `080_boosting_benchmark.R` vergleicht LightGBM und CatBoost (je 200 Iterationen).
+8. `100_lightgbm_tuning.R` optimiert LightGBM per Bayesian Optimization, vergleicht es mit dem Standard-LightGBM per CV und speichert die bessere Variante.
+9. `110_oof_ensemble.R` prueft eine OOF-Mischung aus der zuvor gewaehlten LightGBM-Variante und CatBoost.
+10. `120_full_holdout_confirmation.R` bestaetigt die zuvor gewaehlte LightGBM-Variante, CatBoost und den festen OOF-Blend auf allen Daten per separatem 80/20-Holdout.
+11. `125_segment_metrics.R` berechnet optionale Segmentmetriken fuer konfigurierte
+    Spalten aus `segment_metric_cols`.
+12. `150_train_full_model.R` trainiert die zuvor gewaehlte LightGBM-Variante auf allen Daten.
+13. `155_predict_submission.R` schreibt die Kaggle-Submission.
+14. `158_check_submission_diff.R` prueft optional, ob eine neue Submission wirklich
+    von einer Referenzsubmission abweicht.
+15. `165_mean_submission.R` erzeugt im No-Signal-Fall eine Mittelwert-Submission.
+16. `160_log_kaggle_submission.R` protokolliert gemeldete Public-/Private-Scores fuer finale Modelle oder den Mittelwert in der SQLite-DB.
 
 Aktueller Finalkandidat fuer S5E10 ist getuntes LightGBM: Es gewann die
 unabhaengige Voll-Daten-Holdout-Bestaetigung gegen CatBoost und den OOF-Blend.
@@ -29,6 +37,8 @@ uebernehmen.
 
 Die Tabellen, Beziehungen, Laufzeit-Semantik und Abfrage-Views sind in
 [`DATABASE.md`](DATABASE.md) beschrieben.
+Die neuen Schutzchecks sind in [`WORKFLOW_GUARDS.md`](WORKFLOW_GUARDS.md)
+ausfuehrlicher dokumentiert.
 
 ## Signal-Gate und Stop-Regel
 
@@ -49,6 +59,30 @@ robustes nutzbares Feature-Signal nachgewiesen. In diesem Fall:
 Die Regel verhindert blindes Tuning, ist aber bewusst keine harte
 Automatik: Ein auffaelliger Unterschied zwischen lokaler CV und Leaderboard
 erfordert zuerst eine Pruefung von Split, Daten und Leakage.
+
+## Workflow-Sicherungen aus Forecasting-/Shift-Projekten
+
+Das Template enthaelt optionale Checks, die aus einem zeitlich verschobenen
+Regression-Projekt rueckgefuehrt wurden:
+
+- Feature-Availability-Audit: Train/Test-Paritaet, Missingness-Shift,
+  Sentinel-Werte und externe Quellenklassifikation.
+- Regression-Adversarial-Validation: AUC und ESS/n zeigen, ob Train/Test
+  strukturell unterschiedlich sind.
+- Segmentmetriken: Wenn `segment_metric_cols` gesetzt ist, werden Holdout-
+  Vorhersagen nach fachlichen Risiko- oder Availability-Gruppen ausgewertet.
+- Submission-Diff-Check: Vor einem Leaderboard-Versuch kann geprueft werden,
+  ob die neue Datei ueberhaupt andere Predictions als eine Referenz enthaelt.
+
+Externe Datenquellen sollten in `external_source_policy` als `allowed_input`,
+`inspiration_only` oder `blocked_or_unclear` dokumentiert werden. Die direkte
+Integration externer Daten gehoert erst nach ausdruecklicher Wettbewerbs- und
+Fairnesspruefung in Feature-Code.
+
+Noch **nicht** zurueckgefuehrte, nur an einem Projekt belegte Kandidaten (z.B.
+zeitgeblocktes Resampling, legal-history-Features) stehen in
+[`BACKLOG.md`](BACKLOG.md) und warten auf Bestaetigung durch ein zweites Projekt
+oder einen No-op-Beleg.
 
 Tuning-Suchen speichern die Laufzeit jeder Konfiguration mit ihren
 Hyperparametern. Vor einem Folge-Lauf gibt `estimate_tuning_runtime()` eine
