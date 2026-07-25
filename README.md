@@ -105,6 +105,27 @@ Tuning-Suchen speichern die Laufzeit jeder Konfiguration mit ihren
 Hyperparametern. Vor einem Folge-Lauf gibt `estimate_tuning_runtime()` eine
 Median-/P90-Schaetzung aus den bereits gemessenen Konfigurationen aus.
 
+## Optionales Modul: group-aware Resampling (`group_resampling.R`)
+
+Fuer Aufgaben, deren Ziel die **Generalisierung auf NEUE Entitaeten** ist (neue
+Patienten/Nutzer/Geraete/Molekuele), wobei dieselbe Entitaet in mehreren Zeilen
+vorkommt. Zufaellige CV memoriert die Entitaet und **ueberschaetzt massiv**; group-CV
+(alle Zeilen einer Gruppe im selben Fold) gibt die ehrliche Zahl. Generisch
+(classif & regr):
+- **`set_group_role(task, group_col)`** - setzt die group-Rolle (entfernt die Spalte
+  aus den Features); danach ist `rsmp("cv")` gruppen-erhaltend (GroupKFold).
+- **`diagnose_group_cv(task_grouped, learner, measure)`** - vergleicht random-CV vs
+  group-CV und meldet die Luecke. Grosse Luecke => gruppen-sensitiv, random-CV nicht
+  vertrauen.
+
+**Beleg (openml-4531 parkinsons-telemonitoring, UPDRS aus Stimme, 42 Patienten):**
+random-CV RMSE 1.97 vs group-CV 14.36 (LightGBM) - random-CV war fast reine Patienten-
+Memorierung. Unter group-CV schlaegt der **Mittelwert-Boden jedes Modell** (kaum
+cross-Patienten-Signal), und je flexibler das Modell, desto groesser die Ueber-
+schaetzung. Kernlektion: **die CV-Strategie muss zur Deployment-Frage passen** -
+"bekannte Entitaet monitoren" (random-CV ok) vs. "neue Entitaet vorhersagen"
+(group-CV). Optionaler Baustein, vom Standard-Workflow nicht gesourct.
+
 ## Abgrenzung
 
 Klassenspezifische Bausteine wie Stratifizierung, Klassengewichte, ROC/PR,
