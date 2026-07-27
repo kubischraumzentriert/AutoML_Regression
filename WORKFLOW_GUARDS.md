@@ -128,6 +128,37 @@ Wichtige Kennzahlen:
 Wenn `n_different_predictions = 0`, ist die Submission ein No-op und sollte nicht
 eingereicht werden.
 
+## 6. Devianz-Measures (Count/Tweedie)
+
+Modul: `deviance_measures.R` (Test: `test_deviance.R`)
+
+Zweck:
+
+mlr3 liefert ab Werk KEINE Devianz-Metrik (nur `regr.rmse/mae/mse/msle/rsq`).
+Fuer Count-/Tweedie-Ziele (Schadenhaeufigkeit, Schadenlast, alles mit Nullmasse +
+Rechtsschiefe) ist die mittlere Poisson-/Tweedie-Devianz die richtige Metrik, weil
+sie die Verlustfunktion des Modells spiegelt und ~0-Vorhersagen korrekt bestraft,
+statt sie wie RMSE/MAE zu belohnen.
+
+Nutzung (opt-in, default-inert — nichts sourct das Modul automatisch):
+
+```r
+source(file.path(project_dir, "deviance_measures.R"))
+register_deviance_measures(tweedie_power = 1.5)
+msr("regr.poisson_deviance")
+msr("regr.tweedie_deviance")   # power ueber register_deviance_measures() gesetzt
+```
+
+Verifiziert (`test_deviance.R`): Poisson == Poisson-GLM-Residualdevianz,
+Tweedie(p=2) == Gamma-GLM, p=1 == Poisson, p=0 == MSE, Nullmasse endlich,
+mlr3-Measure == Kernfunktion. `db_schema.sql`/`v_regr_model_results` fuehrt die
+Spalten `poisson_deviance`/`tweedie_deviance` (additiv, NULL ohne diese Measures).
+
+Wichtig: **`p_eval` fixieren.** Der Tweedie-Devianz-WERT haengt stark von der Potenz
+`p` ab (in einem Fall ~11x Unterschied ueber p=1.1..1.9) — Modelle nur bei gleichem
+`p_eval` vergleichen. Die Exposure-Offset-Verdrahtung (nativer col-role bzw.
+LightGBM-`init_score`) ist noch projekt-lokal, siehe `BACKLOG.md`.
+
 ## 5. Empfohlene Reihenfolge
 
 Fuer neue Projekte:

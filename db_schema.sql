@@ -301,6 +301,10 @@ SELECT
   MAX(CASE WHEN mr.mres_measure_name = 'regr.rmse' AND mr.mres_fold IS NULL THEN mr.mres_value END) AS rmse,
   MAX(CASE WHEN mr.mres_measure_name = 'regr.mae' AND mr.mres_fold IS NULL THEN mr.mres_value END) AS mae,
   MAX(CASE WHEN mr.mres_measure_name = 'regr.rsq' AND mr.mres_fold IS NULL THEN mr.mres_value END) AS rsq,
+  -- Count-/Tweedie-Devianz als Zielmetriken (aus deviance_measures.R).
+  -- Kleinere Werte sind besser, NULL fuer Projekte ohne diese Measures.
+  MAX(CASE WHEN mr.mres_measure_name = 'regr.poisson_deviance' AND mr.mres_fold IS NULL THEN mr.mres_value END) AS poisson_deviance,
+  MAX(CASE WHEN mr.mres_measure_name = 'regr.tweedie_deviance' AND mr.mres_fold IS NULL THEN mr.mres_value END) AS tweedie_deviance,
   MAX(mr.mres_elapsed_seconds) AS elapsed_seconds,
   (SELECT GROUP_CONCAT(h.hparam_name || '=' || h.hparam_value, ', ')
      FROM hyperparam h WHERE h.hparam_mconf_id = mc.mconf_id) AS hyperparams

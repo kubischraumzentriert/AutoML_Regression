@@ -68,6 +68,40 @@ Projekt belegt. Nicht pauschal fuer i.i.d.-Regression aktivieren.
    zum vorhandenen `158_check_submission_diff.R`: wenn ein Segment-Hebel im echten
    Test keine Zeile veraendert, automatisch als No-op kennzeichnen.
 
+## Herkunft: Count/Tweedie-Projekt (tweet, French Motor freMTPL2)
+
+Erstes Count-/Tweedie-Regressionsprojekt. Das Devianz-Modul ist bereits ins
+Template gewandert (default-inert, No-op-Zweig — `deviance_measures.R`,
+`WORKFLOW_GUARDS.md` Abschnitt 6). Die folgenden Bausteine greifen in bestehende
+Skripte ein bzw. sind datensatzgeformt → bleiben 1-Projekt-Kandidaten, bis ein 2.
+Count-/Tweedie-Projekt sie bestaetigt.
+
+10. **Exposure als echter log-Offset — Verdrahtungs-Helfer.** Drei Wege, alle in
+    tweet verifiziert: (a) nativer mlr3-`offset`-col-role
+    (`task$set_col_roles(col, "offset")`) — von `regr.glm`/`regr.glmnet`/`regr.xgboost`
+    bei Training UND Vorhersage genutzt, ueberlebt `po("encode")`; (b) LightGBM
+    hat KEINE offset-Property → native API `dtr$set_field("init_score", log(exp))`,
+    Predict `mu = exp * response`; (c) Tweedie-GLM braucht base-R
+    `glm(family = statmod::tweedie(var.power=p, link.power=0))`, weil mlr3 `regr.glm`
+    kein Family-Objekt akzeptiert. Greift in `020_task.R`/`030_baseline.R`/
+    `080_boosting_benchmark.R` ein → erst als generischer `set_offset()`/init_score-
+    Helfer backporten, wenn ein 2. Projekt die API-Form bestaetigt.
+
+11. **Metrik-Angemessenheits-A/B.** Vier Praediktoren (near_zero / naive_mean /
+    null_offset / full) auf RMSE/MAE **vs.** Devianz. Macht messbar, dass bei hoher
+    Nullmasse RMSE/MAE ~0-Vorhersagen belohnen und Modelle kaum rangieren, die
+    Devianz aber klar trennt (tweet: RMSE-Spanne +0,4 % vs. Devianz +15497 %; das
+    bessere Modell hatte sogar schlechteren RMSE). Generalisiert zu „ist mein Loss
+    die richtige Metrik?" fuer jedes schiefe/nullmassige Ziel.
+
+12. **Durable Befunde (als Doku-Notiz, kein Code):** (a) Offset-Wirkung ist
+    modellklassenabhaengig — linearer GLM profitiert klar, flexibler Boost bei
+    Poisson gar nicht und bei Tweedie sogar negativ (Ursache: niedriges Exposure-
+    Terzil, multiplikative Rate-Korrektur verstaerkt Rauschen). (b) Referenz IMMER
+    auf identischen Folds rechnen (ein Single-Split-GLM vs. 5-fold-Boost drehte das
+    Ergebnis). (c) externer Sanity-Check via D² (skaleninvariant), nicht absolute
+    Devianz (Rate+Gewichte vs. Offset liegen auf verschiedenen Skalen).
+
 ---
 
 ## Aufnahme-Kriterium erfuellt? → hier abhaken und ins Template verschieben
@@ -83,3 +117,6 @@ Projekt belegt. Nicht pauschal fuer i.i.d.-Regression aktivieren.
 | 7 Segment-Blends | – | offen |
 | 8 Residualisierung als Option | – | offen |
 | 9 Segmentbelegung-Check | – | offen |
+| 10 Exposure-Offset-Verdrahtung | tweet (1) | offen |
+| 11 Metrik-Angemessenheits-A/B | tweet (1) | offen |
+| 12 Durable Befunde (Doku) | tweet (1) | offen |
