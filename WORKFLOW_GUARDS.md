@@ -159,6 +159,9 @@ Wichtig: **`p_eval` fixieren.** Der Tweedie-Devianz-WERT haengt stark von der Po
 `p_eval` vergleichen. Die Exposure-Offset-Verdrahtung (nativer col-role bzw.
 LightGBM-`init_score`) ist noch projekt-lokal, siehe `BACKLOG.md`.
 
+Theorie/Hintergrund/Literatur (Exponential-Dispersions-Modelle, Tweedie-Familie,
+warum Devianz statt RMSE, Namensherkunft, Quellen): siehe `DEVIANCE_MEASURES.md`.
+
 ## 5. Empfohlene Reihenfolge
 
 Fuer neue Projekte:
