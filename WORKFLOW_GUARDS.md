@@ -209,6 +209,22 @@ accident-risk`, volle 517755 Zeilen): kein Feature ueberschreitet 50%
 Gain-Share (Top: curvature 36.4%, lighting 27.0%, speed_limit 25.3%), keine
 Wert-Gruppe mit stark reduzierter Zielstreuung - Audit korrekt unauffaellig.
 
+**Praeventiv portierte Haertung (2026-08-05)**: Das Klassifikations-Template
+hat sein Pendant (`015_target_leak_audit.R`) auf zwei reale externe Projekte
+angewandt (PumpItUp, geoai-aquaculture) und dabei zwei generische mlr3-Task-
+Bugs gefunden, die die eigene (synthetische) Zielaufgabe nie ausloeste - beide
+betreffen `as_task_regr()`/`as_task_classif()` gleichermassen, deshalb hier
+vorsorglich mitgezogen (noch KEINE eigenstaendige Regressions-Cross-Projekt-
+Bestaetigung, nur no-op-getestet gegen das Template-eigene Projekt):
+
+- Datumsspalten (`Date`/`IDate`/`POSIXct`, z.B. aus `fread()`) liessen
+  `as_task_regr()` abstuerzen - jetzt numerisch konvertiert (Tage/Sekunden
+  seit Epoch) statt fallengelassen, ein Datum kann selbst leak-relevant sein.
+- Rein kontinuierliche Feature-Saetze ohne jede Spalte
+  `<= leak_audit_cardinality_max` liessen Schritt 2 abstuerzen
+  (`rbindlist(list())` erzeugt eine spaltenlose Tabelle) - jetzt expliziter
+  Kurzschluss mit Hinweistext statt Absturz.
+
 ## 5. Empfohlene Reihenfolge
 
 Fuer neue Projekte:

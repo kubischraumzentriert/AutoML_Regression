@@ -43,6 +43,11 @@ if (id_col %in% names(train)) train[, (id_col) := NULL]
 
 char_cols <- names(train)[vapply(train, is.character, logical(1))]
 train[, (char_cols) := lapply(.SD, as.factor), .SDcols = char_cols]
+# Datumsspalten (Date/IDate/POSIXct, z.B. aus fread()) werden von mlr3-Tasks
+# nicht unterstuetzt -> numerisch (Tage/Sekunden seit Epoch) statt fallenlassen,
+# ein Datum kann selbst leak-relevant sein (z.B. "erfasst am" nach dem Ausgang).
+date_cols <- names(train)[vapply(train, function(x) inherits(x, c("Date", "IDate", "POSIXct")), logical(1))]
+train[, (date_cols) := lapply(.SD, as.numeric), .SDcols = date_cols]
 train[, (target_col) := as.numeric(get(target_col))]
 
 # LightGBM verarbeitet fehlende Werte und Faktoren nativ, daher ohne
@@ -94,9 +99,24 @@ compute_determinism <- function(col_name) {
   agg[, .(feature, value, n, mean_target, sd_target, sd_ratio)]
 }
 
-determinism_dt <- rbindlist(lapply(low_card_cols, compute_determinism), fill = TRUE)
-determinism_dt[, flagged := !is.na(sd_ratio) & sd_ratio <= leak_audit_determinism_sd_ratio & n >= leak_audit_determinism_min_n]
-setorder(determinism_dt, -flagged, -n)
+if (length(low_card_cols) == 0) {
+  # z.B. rein kontinuierliche Feature-Saetze ohne jede Spalte
+  # <= leak_audit_cardinality_max - rbindlist(list()) haette hier eine
+  # spaltenlose Tabelle erzeugt und den nachfolgenden Zugriff zum Absturz
+  # gebracht, daher expliziter Kurzschluss statt stillem/kaputtem Leerfall.
+  cat(sprintf(
+    "Keine Spalte mit <= %d eindeutigen Werten - Schritt uebersprungen.\n",
+    leak_audit_cardinality_max
+  ))
+  determinism_dt <- data.table(
+    feature = character(0), value = character(0), n = integer(0),
+    mean_target = numeric(0), sd_target = numeric(0), sd_ratio = numeric(0), flagged = logical(0)
+  )
+} else {
+  determinism_dt <- rbindlist(lapply(low_card_cols, compute_determinism), fill = TRUE)
+  determinism_dt[, flagged := !is.na(sd_ratio) & sd_ratio <= leak_audit_determinism_sd_ratio & n >= leak_audit_determinism_min_n]
+  setorder(determinism_dt, -flagged, -n)
+}
 fwrite(determinism_dt, leak_audit_determinism_path)
 
 flagged_determinism <- determinism_dt[flagged == TRUE]
@@ -106,7 +126,7 @@ if (nrow(flagged_determinism) > 0) {
     nrow(flagged_determinism), leak_audit_determinism_sd_ratio, leak_audit_determinism_min_n
   ))
   print(flagged_determinism)
-} else {
+} else if (length(low_card_cols) > 0) {
   cat(sprintf(
     "Keine Wert-Gruppe mit n>=%d zeigt eine SD-Ratio <= %.2f.\n",
     leak_audit_determinism_min_n, leak_audit_determinism_sd_ratio
