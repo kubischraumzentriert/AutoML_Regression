@@ -162,20 +162,68 @@ LightGBM-`init_score`) ist noch projekt-lokal, siehe `BACKLOG.md`.
 Theorie/Hintergrund/Literatur (Exponential-Dispersions-Modelle, Tweedie-Familie,
 warum Devianz statt RMSE, Namensherkunft, Quellen): siehe `DEVIANCE_MEASURES.md`.
 
+## 7. Target-Leak-Audit
+
+Skript: `013_target_leak_audit.R`
+
+Zweck:
+
+Eine zu gute Baseline auf einer schweren Aufgabe ist ein Warnsignal, kein Erfolg.
+CV<->Leaderboard-Uebereinstimmung faengt einen Leak NICHT (das Artefakt steckt
+meist auch in den Testdaten). Zurueckgefuehrt aus dem Klassifikations-Template
+(dort an African-Credit-Scoring bestaetigt: eine naive F1-0.88-Baseline war ein
+Ex-post-Leak, ehrlich F1 ~0.41, extern am Leaderboard fast exakt bestaetigt).
+Laeuft bewusst auf **vollen** Daten (kein Subset), vier automatisierte Schritte:
+
+1. Feature-Importance-Konzentration (LightGBM-Gain-Share eines einzelnen Features).
+2. Determinismus - fuer stetige Ziele adaptiert: Zielstreuung (SD) INNERHALB einer
+   Wertgruppe relativ zur Gesamtstreuung; nahe Null = das Feature pinnt den
+   Zielwert nahezu fest.
+3. Optional: Within-Stratum-Korrelation (`leak_audit_stratify_cols`) - bleibt ein
+   verdaechtiges numerisches Feature auch innerhalb einer neutralen Kategorie
+   stark mit dem Ziel korreliert?
+4. Ehrlich-vs-aufgeblasen-Zerlegung: gepaarter Holdout, Zielmetrik mit vs. ohne
+   die Verdaechtigen.
+
+Schritt 5 (Verfuegbarkeit zur Entscheidungszeit) ist bewusst NICHT automatisiert -
+das Skript listet nur die Verdaechtigen und die Leitfragen, das Urteil bleibt fachlich.
+
+Config:
+
+```r
+leak_audit_importance_share_threshold <- 0.50
+leak_audit_determinism_min_n <- 30
+leak_audit_determinism_sd_ratio <- 0.10
+leak_audit_stratify_cols <- character(0)  # optional
+```
+
+Outputs:
+
+- `_artifacts/leak_audit_importance.csv`
+- `_artifacts/leak_audit_determinism.csv`
+- `_artifacts/leak_audit_within_stratum.csv` (nur falls `leak_audit_stratify_cols` gesetzt)
+- `_artifacts/leak_audit_decomposition.csv` (nur falls Verdaechtige gefunden wurden)
+
+Getestet gegen das Template-eigene Projekt (`playground-series-s5e10-road-
+accident-risk`, volle 517755 Zeilen): kein Feature ueberschreitet 50%
+Gain-Share (Top: curvature 36.4%, lighting 27.0%, speed_limit 25.3%), keine
+Wert-Gruppe mit stark reduzierter Zielstreuung - Audit korrekt unauffaellig.
+
 ## 5. Empfohlene Reihenfolge
 
 Fuer neue Projekte:
 
 1. `010_eda.R`
-2. `012_feature_availability_audit.R`
-3. `015_signal_diagnostics.R`
-4. `018_adversarial_validation.R`
-5. Baselines und Boosting-Schritte.
-6. `120_full_holdout_confirmation.R`
-7. optional `125_segment_metrics.R`
-8. `155_predict_submission.R`
-9. optional `158_check_submission_diff.R`
-10. `160_log_kaggle_submission.R`
+2. `013_target_leak_audit.R`
+3. `012_feature_availability_audit.R`
+4. `015_signal_diagnostics.R`
+5. `018_adversarial_validation.R`
+6. Baselines und Boosting-Schritte.
+7. `120_full_holdout_confirmation.R`
+8. optional `125_segment_metrics.R`
+9. `155_predict_submission.R`
+10. optional `158_check_submission_diff.R`
+11. `160_log_kaggle_submission.R`
 
 ## Nicht automatisieren
 

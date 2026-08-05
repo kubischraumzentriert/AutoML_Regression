@@ -41,6 +41,28 @@ adversarial_validation_results_path <- file.path(artifact_dir, "adversarial_vali
 adversarial_validation_prediction_path <- file.path(artifact_dir, "adversarial_validation_predictions.csv")
 adversarial_exclude_cols <- c(id_col, target_col)
 
+# Target-Leak-Audit (013): eine zu gute Baseline auf einer schweren Aufgabe ist
+# ein Warnsignal, kein Erfolg - CV<->Leaderboard-Uebereinstimmung faengt einen
+# Leak NICHT (das Artefakt steckt meist auch in den Testdaten). Rueckgefuehrt aus
+# dem Klassifikations-Template (dort an African-Credit-Scoring bestaetigt: eine
+# naive F1-0.88-Baseline war ein Ex-post-Leak, ehrlich F1 ~0.41). Schritt 2
+# (Determinismus) ist hier fuer STETIGE Ziele adaptiert: statt P(Klasse|Wert)=0/1
+# wird geprueft, ob die Zielstreuung INNERHALB einer Wertgruppe nahe Null ist
+# relativ zur Gesamtstreuung (das Feature pinnt den Zielwert nahezu fest).
+leak_audit_importance_share_threshold <- 0.50  # 1 Feature traegt >50% der Gain-Importance
+leak_audit_suspect_top_n <- 8                  # max. Anzahl Verdaechtiger fuer die Zerlegung
+leak_audit_determinism_min_n <- 30             # Mindestgruppengroesse fuer einen Determinismus-Fund
+leak_audit_determinism_sd_ratio <- 0.10        # Gruppen-SD/Gesamt-SD unter dieser Schwelle = verdaechtig
+leak_audit_cardinality_max <- 30               # nur Spalten mit <= so vielen eindeutigen Werten pruefen
+# Optional: kategoriale Spalten, gegen die verdaechtige NUMERISCHE Features per
+# Within-Stratum-Korrelation geprueft werden. Default leer = Schritt wird
+# uebersprungen (projektspezifisches Wissen noetig).
+leak_audit_stratify_cols <- character(0)
+leak_audit_importance_path <- file.path(artifact_dir, "leak_audit_importance.csv")
+leak_audit_determinism_path <- file.path(artifact_dir, "leak_audit_determinism.csv")
+leak_audit_stratum_path <- file.path(artifact_dir, "leak_audit_within_stratum.csv")
+leak_audit_decomposition_path <- file.path(artifact_dir, "leak_audit_decomposition.csv")
+
 baseline_results_path <- file.path(artifact_dir, "baseline_results.csv")
 baseline_benchmark_path <- file.path(artifact_dir, "baseline_benchmark.rds")
 boosting_results_path <- file.path(artifact_dir, "boosting_results.csv")
