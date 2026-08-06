@@ -4,31 +4,17 @@ Wiederverwendbarer `mlr3`-Workflow fuer tabellarische Regressionsaufgaben.
 Das erste Referenzprojekt ist Kaggle Playground Series S5E10: Vorhersage von
 `accident_risk` mit RMSE als Zielmetrik.
 
-## Bootstrap-Workflow
-
-1. `010_eda.R` prueft Datenstruktur, fehlende Werte und Zielvariable.
-2. `012_feature_availability_audit.R` vergleicht Train/Test-Spalten,
-   Missingness, Sentinel-Werte und externe Quellen-Konventionen.
-3. `015_signal_diagnostics.R` vergleicht die CV-Mittelwertreferenz mit dem Feature-Signal.
-4. `018_adversarial_validation.R` misst, wie gut Train/Test anhand der Features
-   unterscheidbar sind.
-5. `020_task.R` erstellt einen 10%-`TaskRegr` aus den Rohfeatures.
-6. `030_baseline.R` vergleicht rpart und Ranger (100 Baeume) per 5-facher CV.
-7. `080_boosting_benchmark.R` vergleicht LightGBM und CatBoost (je 200 Iterationen).
-8. `100_lightgbm_tuning.R` optimiert LightGBM per Bayesian Optimization, vergleicht es mit dem Standard-LightGBM per CV und speichert die bessere Variante.
-9. `110_oof_ensemble.R` prueft eine OOF-Mischung aus der zuvor gewaehlten LightGBM-Variante und CatBoost.
-10. `120_full_holdout_confirmation.R` bestaetigt die zuvor gewaehlte LightGBM-Variante, CatBoost und den festen OOF-Blend auf allen Daten per separatem 80/20-Holdout.
-11. `125_segment_metrics.R` berechnet optionale Segmentmetriken fuer konfigurierte
-    Spalten aus `segment_metric_cols`.
-12. `150_train_full_model.R` trainiert die zuvor gewaehlte LightGBM-Variante auf allen Daten.
-13. `155_predict_submission.R` schreibt die Kaggle-Submission.
-14. `158_check_submission_diff.R` prueft optional, ob eine neue Submission wirklich
-    von einer Referenzsubmission abweicht.
-15. `165_mean_submission.R` erzeugt im No-Signal-Fall eine Mittelwert-Submission.
-16. `160_log_kaggle_submission.R` protokolliert gemeldete Public-/Private-Scores fuer finale Modelle oder den Mittelwert in der SQLite-DB.
-
-Aktueller Finalkandidat fuer S5E10 ist getuntes LightGBM: Es gewann die
-unabhaengige Voll-Daten-Holdout-Bestaetigung gegen CatBoost und den OOF-Blend.
+> **Einstieg / Kontext erfassen**: vor dem Deep-Dive in einzelne Skripte
+> zuerst [`WorkflowDescription.md`](WorkflowDescription.md) ansehen - dort
+> steht ein Mermaid-Diagramm mit dem kompletten Ablauf inkl. aller
+> Entscheidungspunkte (Metrik-Typ, Signal-Gate, Adversarial-Shift, Tuning-/
+> Ensemble-Entscheidungen, Neural-Gate) sowie die Bootstrap-Workflow-Liste,
+> das Signal-Gate/Stop-Regel-Detail und die Abgrenzung zum Klassifikations-
+> Template. Gilt auch fuer eine KI-Session, die hier den Kontext erfassen
+> soll: das Diagramm ist der guenstigste Einstiegspunkt. Fuer automatisierte
+> Agenten (Codex, Claude Code, etc.) siehe zusaetzlich
+> [`AGENTS.md`](AGENTS.md) - u.a. die Pflicht, das Diagramm bei Aenderungen
+> an der Ablauflogik mitzuziehen.
 
 ## Reproduzierbare Pipeline (`_targets.R`)
 
@@ -60,85 +46,7 @@ Fuer neuronale Tabellenmodelle (FT-Transformer) als Ensemble-Diversitaet siehe
 [`NEURAL_DEPLOY.md`](NEURAL_DEPLOY.md): R-only-Policy, wann sich ein neuronales
 Modell lohnt, und der Python-GPU-Export-Workflow fuer Kaggle.
 
-## Signal-Gate und Stop-Regel
-
-`015_signal_diagnostics.R` ist ein frueher Entscheidungscheck, kein Modell-
-Ersatz. Wenn die CV-Mittelwertreferenz bereits auf dem Niveau von rpart,
-Ranger und mindestens einem nichtlinearen Boosting-Modell liegt, ist kein
-robustes nutzbares Feature-Signal nachgewiesen. In diesem Fall:
-
-1. Mit `165_mean_submission.R` eine Mittelwert-Submission als externe
-   Kalibrierung erzeugen; in `160_log_kaggle_submission.R`
-   `submission_candidate <- "target_mean"` setzen und ihren Kaggle-Score in
-   `submission_result` speichern.
-2. Bei Uebereinstimmung von CV und Leaderboard weder Hyperparameter-Tuning
-   noch Ensembles oder zusaetzliche Modellfamilien starten.
-3. Erst mit zusaetzlichen, wettbewerbskonformen Informationen oder einer
-   veraenderten Feature-Repraesentation erneut experimentieren.
-
-Die Regel verhindert blindes Tuning, ist aber bewusst keine harte
-Automatik: Ein auffaelliger Unterschied zwischen lokaler CV und Leaderboard
-erfordert zuerst eine Pruefung von Split, Daten und Leakage.
-
-## Workflow-Sicherungen aus Forecasting-/Shift-Projekten
-
-Das Template enthaelt optionale Checks, die aus einem zeitlich verschobenen
-Regression-Projekt rueckgefuehrt wurden:
-
-- Feature-Availability-Audit: Train/Test-Paritaet, Missingness-Shift,
-  Sentinel-Werte und externe Quellenklassifikation.
-- Regression-Adversarial-Validation: AUC und ESS/n zeigen, ob Train/Test
-  strukturell unterschiedlich sind.
-- Segmentmetriken: Wenn `segment_metric_cols` gesetzt ist, werden Holdout-
-  Vorhersagen nach fachlichen Risiko- oder Availability-Gruppen ausgewertet.
-- Submission-Diff-Check: Vor einem Leaderboard-Versuch kann geprueft werden,
-  ob die neue Datei ueberhaupt andere Predictions als eine Referenz enthaelt.
-
-Externe Datenquellen sollten in `external_source_policy` als `allowed_input`,
-`inspiration_only` oder `blocked_or_unclear` dokumentiert werden. Die direkte
-Integration externer Daten gehoert erst nach ausdruecklicher Wettbewerbs- und
-Fairnesspruefung in Feature-Code.
-
-Noch **nicht** zurueckgefuehrte, nur an einem Projekt belegte Kandidaten (z.B.
-zeitgeblocktes Resampling, legal-history-Features) stehen in
-[`BACKLOG.md`](BACKLOG.md) und warten auf Bestaetigung durch ein zweites Projekt
-oder einen No-op-Beleg.
-
-Tuning-Suchen speichern die Laufzeit jeder Konfiguration mit ihren
-Hyperparametern. Vor einem Folge-Lauf gibt `estimate_tuning_runtime()` eine
-Median-/P90-Schaetzung aus den bereits gemessenen Konfigurationen aus.
-
-## Optionales Modul: group-aware Resampling (`group_resampling.R`)
-
-Fuer Aufgaben, deren Ziel die **Generalisierung auf NEUE Entitaeten** ist (neue
-Patienten/Nutzer/Geraete/Molekuele), wobei dieselbe Entitaet in mehreren Zeilen
-vorkommt. Zufaellige CV memoriert die Entitaet und **ueberschaetzt massiv**; group-CV
-(alle Zeilen einer Gruppe im selben Fold) gibt die ehrliche Zahl. Generisch
-(classif & regr):
-- **`set_group_role(task, group_col)`** - setzt die group-Rolle (entfernt die Spalte
-  aus den Features); danach ist `rsmp("cv")` gruppen-erhaltend (GroupKFold).
-- **`diagnose_group_cv(task_grouped, learner, measure)`** - vergleicht random-CV vs
-  group-CV und meldet die Luecke. Grosse Luecke => gruppen-sensitiv, random-CV nicht
-  vertrauen.
-
-**Beleg (openml-4531 parkinsons-telemonitoring, UPDRS aus Stimme, 42 Patienten):**
-random-CV RMSE 1.97 vs group-CV 14.36 (LightGBM) - random-CV war fast reine Patienten-
-Memorierung. Unter group-CV schlaegt der **Mittelwert-Boden jedes Modell** (kaum
-cross-Patienten-Signal), und je flexibler das Modell, desto groesser die Ueber-
-schaetzung. Kernlektion: **die CV-Strategie muss zur Deployment-Frage passen** -
-"bekannte Entitaet monitoren" (random-CV ok) vs. "neue Entitaet vorhersagen"
-(group-CV). Optionaler Baustein, vom Standard-Workflow nicht gesourct.
-
-## Abgrenzung
-
-Klassenspezifische Bausteine wie Stratifizierung, Klassengewichte, ROC/PR,
-Threshold-Tuning und Konfusionsmatrizen gehoeren nicht in diesen Workflow.
-Fuer Regression werden stattdessen RMSE, MAE, R-Quadrat und spaeter
-Residualdiagnostik verwendet.
-
-Der Ensemble-Schritt speichert die OOF-Metriken aller getesteten Gewichte
-sowie die vollstaendigen OOF-Prognosen der beiden Basismodelle und der besten
-Mischung in der SQLite-DB. Ein OOF-Gewinn ist nur ein Kandidat; bevor das
-Ensemble fuer die Submission ausgewaehlt wird, wird er separat bestaetigt.
-`120_full_holdout_confirmation.R` ist diese Bestaetigung: Das zuvor bestimmte
-Gewicht wird nicht erneut auf dem Holdout optimiert.
+Die Bootstrap-Workflow-Liste, das Signal-Gate/Stop-Regel-Detail, die
+optionalen Workflow-Sicherungen, das group-aware-Resampling-Modul und die
+Abgrenzung zum Klassifikations-Template stehen jetzt in
+[`WorkflowDescription.md`](WorkflowDescription.md).
