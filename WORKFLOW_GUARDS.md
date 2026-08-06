@@ -225,6 +225,38 @@ Bestaetigung, nur no-op-getestet gegen das Template-eigene Projekt):
   (`rbindlist(list())` erzeugt eine spaltenlose Tabelle) - jetzt expliziter
   Kurzschluss mit Hinweistext statt Absturz.
 
+**Sensitivitaetstest an einem ECHTEN, bekannten Leak (2026-08-05, OpenML 42712
+"Bike_Sharing_Demand")**: Alle bisherigen Bestaetigungen zeigten nur, dass der
+Guard bei sauberen Daten still bleibt (Spezifitaet) - nie, ob er einen echten
+Leak FINDET (Sensitivitaet). Die UCI/Kaggle-Bike-Sharing-Rohdaten (OpenML
+markiert `casual`/`registered` explizit als `ignore_attribute`) haben einen
+verifizierten, deterministischen Leak: `casual + registered == count` exakt
+bei 100% von 17379 Zeilen. Testprojekt: `C:\Users\HP\ML_Learning\
+openml-bike-sharing-leak-test\` (nur `000_config.R` + `013_...R` + `train.csv`
+noetig, kein DB-Logging).
+
+**Ergebnis - der Guard fand ihn:**
+
+| Variante | RMSE | R2 |
+|---|---:|---:|
+| Voll (mit `casual`+`registered`) | 3.12 | 0.9997 |
+| Guard-Ergebnis (nur `registered` entfernt) | 32.50 | 0.9668 |
+| Vollstaendig ehrlich (beide entfernt) | 40.67 | 0.9480 |
+
+Schritt 1 flaggte `registered` (94.7% Gain-Share, weit ueber der 50%-Schwelle);
+Schritt 4 zeigte den fast 10-fachen RMSE-Anstieg (3.12 -> 32.50) - ein klares,
+korrektes Leak-Signal.
+
+**Bekannte Grenze dabei entdeckt**: `casual` (5.3% Gain-Share) blieb UNTER der
+Einzel-Schwelle und wurde nicht in die Zerlegung einbezogen - die vom Guard
+berichteten "ehrlichen" 32.50 sind selbst noch ~20% zu optimistisch (wahre
+Zahl 40.67). **Der Guard prueft nur Einzelfeature-Konzentration, keine
+gemeinsam wirkenden Leak-Paare/-Gruppen.** Bewusst NICHT automatisch behoben
+(z.B. per kumulativer Top-k-Schwelle) - das Risiko, legitime, gemeinsam starke
+Features faelschlich auszuschliessen, waere real, und Schritt 5 (manuelles
+Urteil) faengt den Rest ab: eine Warnung + ein 10-facher RMSE-Sprung provoziert
+ohnehin weitere Pruefung, bei der ein Mensch `casual` findet.
+
 ## 5. Empfohlene Reihenfolge
 
 Fuer neue Projekte:

@@ -104,6 +104,26 @@ Count-/Tweedie-Projekt sie bestaetigt.
 
 ---
 
+## Herkunft: Sensitivitaetstest Target-Leak-Audit (OpenML 42712 Bike-Sharing)
+
+13. **Kumulative Top-k-Importance-Schwelle fuer `013_target_leak_audit.R`
+    (Schritt 1)** - Anlass: Sensitivitaetstest am bekannten Bike-Sharing-Leak
+    (`casual + registered == count` exakt bei 100% der Zeilen). Der Guard fand
+    den Leak korrekt (`registered` 94.7% Gain-Share > Schwelle, Zerlegung
+    RMSE 3.12 -> 32.50), liess aber `casual` (5.3%, unter der 50%-Einzel-
+    schwelle) in der "ehrlichen" Zerlegung stehen - die berichteten 32.50 RMSE
+    waren selbst noch ~20% zu optimistisch (voll ehrlich: 40.67). **Der Guard
+    prueft nur Einzelfeature-Konzentration, keine gemeinsam wirkenden Leak-
+    Paare/-Gruppen.** Idee: zusaetzlich pruefen, ob die kumulierte Gain-Share
+    der Top-k-Features (k=2,3,...) eine Schwelle ueberschreitet, nicht nur ein
+    einzelnes Feature. Bewusst NICHT sofort umgesetzt - Risiko, legitime,
+    gemeinsam starke (aber nicht leakende) Feature-Gruppen faelschlich
+    auszuschliessen; Schritt 5 (manuelles Urteil) faengt den Rest bereits ab,
+    ein 10-facher RMSE-Sprung provoziert ohnehin weitere Pruefung. 1-Projekt-
+    Kandidat, niedrige Prioritaet.
+
+---
+
 ## Aufnahme-Kriterium erfuellt? → hier abhaken und ins Template verschieben
 
 | Kandidat | 2. Projekt / No-op-Beleg | Status |
@@ -120,3 +140,4 @@ Count-/Tweedie-Projekt sie bestaetigt.
 | 10 Exposure-Offset-Verdrahtung | tweet (1) | offen |
 | 11 Metrik-Angemessenheits-A/B | tweet (1) | offen |
 | 12 Durable Befunde (Doku) | tweet (1) | offen |
+| 13 kumulative Top-k-Importance-Schwelle | openml-bike-sharing (1) | offen |
