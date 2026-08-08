@@ -31,14 +31,45 @@ suppressPackageStartupMessages({
 #
 # Idempotent: ein Projekt (per proj_name) wird nur gemergt, wenn es in der
 # Ziel-DB noch nicht existiert - mehrfaches Ausfuehren ist gefahrlos.
+#
+# Quellen werden AUTOMATISCH unter den bekannten Projekt-Wurzeln gesucht
+# (`R_Workspace`, `ML_Learning`), statt eine Liste manuell zu pflegen - eine
+# hardcodierte Liste veraltet zuverlaessig. Die beiden Template-Repos selbst
+# (deren EIGENE `_artifacts/experiments.db` das Merge-Ziel bzw. das Pendant
+# fuer Klassifikation ist) werden ausgeschlossen, um kein Projekt versehentlich
+# mit sich selbst oder dem falschen Template zu mergen.
+#
+# HINWEIS (2026-08-08): Diese Datei war bis hierher eine unangepasste Kopie
+# der Klassifikations-Version - `target_db_path` zeigte faelschlich auf die
+# Klassifikations-DB statt auf dieses Repo, korrigiert im selben Zug wie die
+# Auto-Discovery-Uebernahme (siehe adr/001-local-project-db-central-merge.md).
 
-target_db_path <- "C:/Users/HP/OneDrive/Dokumente/R_Workspace/MLR3_Classifikation/_artifacts/experiments.db"
+target_db_path <- "C:/Users/HP/OneDrive/Dokumente/R_Workspace/MLR3_Regression/_artifacts/experiments.db"
 
-source_db_paths <- c(
-  "playground-series-s6e5" = "C:/Users/HP/OneDrive/Dokumente/R_Workspace/playground-series-s6e5/_artifacts/experiments.db",
-  "playground-series-s6e6" = "C:/Users/HP/OneDrive/Dokumente/R_Workspace/playground-series-s6e6/_artifacts/experiments.db",
-  "playground-series-s5e12" = "C:/Users/HP/OneDrive/Dokumente/R_Workspace/playground-series-s5e12/_artifacts/experiments.db"
+project_roots <- c(
+  "C:/Users/HP/OneDrive/Dokumente/R_Workspace",
+  "C:/Users/HP/ML_Learning"
 )
+exclude_dirs <- c("MLR3_Classifikation", "MLR3_Regression")
+
+discover_source_db_paths <- function(roots, exclude, target) {
+  target_norm <- normalizePath(target, winslash = "/", mustWork = FALSE)
+  found <- unlist(lapply(roots, function(root) {
+    if (!dir.exists(root)) return(character(0))
+    Sys.glob(file.path(root, "*", "_artifacts", "experiments.db"))
+  }))
+  found <- unique(normalizePath(found, winslash = "/", mustWork = FALSE))
+  found <- found[found != target_norm]
+  project_dir_name <- basename(dirname(dirname(found)))
+  found <- found[!project_dir_name %in% exclude]
+  project_dir_name <- basename(dirname(dirname(found)))
+  setNames(found, project_dir_name)
+}
+
+source_db_paths <- discover_source_db_paths(project_roots, exclude_dirs, target_db_path)
+cat("Gefundene Quell-DBs (", length(source_db_paths), "):\n", sep = "")
+for (nm in names(source_db_paths)) cat("  -", nm, "->", source_db_paths[[nm]], "\n")
+cat("\n")
 
 # Tabellen in Fremdschluessel-Abhaengigkeitsreihenfolge (Eltern vor Kindern).
 merge_tables <- c(
@@ -86,8 +117,18 @@ for (project_label in names(source_db_paths)) {
     next
   }
 
-  if (source_proj_name %in% existing_projects) {
-    cat("  Bereits gemergt (proj_name '", source_proj_name, "' existiert schon), uebersprungen.\n\n", sep = "")
+  # Eine Quell-DB kann mehrere proj_name-Zeilen enthalten (z.B. `tweet` mit
+  # separaten Poisson-/Tweedie-Projekten in derselben Datei) - deshalb ueber
+  # ALLE Namen pruefen, nicht nur den ersten.
+  already_merged <- source_proj_name %in% existing_projects
+  if (all(already_merged)) {
+    cat("  Bereits vollstaendig gemergt (", paste(source_proj_name, collapse = ", "), "), uebersprungen.\n\n", sep = "")
+    next
+  }
+  if (any(already_merged) && !all(already_merged)) {
+    cat("  TEILWEISE bereits gemergt (", paste(source_proj_name[already_merged], collapse = ", "),
+        ") - restliche Projekte (", paste(source_proj_name[!already_merged], collapse = ", "),
+        ") NICHT automatisch gemergt, manuell pruefen.\n\n", sep = "")
     next
   }
 
@@ -113,7 +154,7 @@ for (project_label in names(source_db_paths)) {
     }
     dbCommit(con)
     existing_projects <- c(existing_projects, source_proj_name)
-    cat("  Gemergt: '", source_proj_name, "'\n\n", sep = "")
+    cat("  Gemergt: '", paste(source_proj_name, collapse = "', '"), "'\n\n", sep = "")
   }, error = function(e) {
     dbRollback(con)
     cat("  FEHLER, Merge fuer dieses Projekt zurueckgerollt:", conditionMessage(e), "\n\n")

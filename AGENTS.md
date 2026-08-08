@@ -26,6 +26,17 @@ Audit-Schwellen), oder fuegt er eine neue Guard-/Gate-Stufe hinzu (wie das
 Neural-Gate aus `NEURAL_DEPLOY.md`)? Falls ja: `WorkflowDescription.md`
 und ggf. `WORKFLOW_GUARDS.md` aktualisieren, sonst reicht der Code allein.
 
+## Architekturentscheidungen (ADRs)
+
+`adr/` enthaelt kurze, nummerierte Architekturentscheidungen (z.B. warum
+Projekt-DBs lokal bleiben statt einer geteilten Live-DB, die R-only/Python-
+GPU-Export-Policy, die ≥2-Projekt-Backport-Regel). Vor einer Aenderung, die
+eine dieser Entscheidungen beruehrt, erst das passende ADR lesen statt neu
+zu diskutieren/zu raten. Das Verzeichnis existiert **dupliziert** im
+Schwester-Repo `AutoML` (Klassifikations-Template) - bei einer Aenderung an
+einer Entscheidung das ADR in BEIDEN Repos pruefen/aktualisieren, siehe
+`adr/README.md`.
+
 ## Git-Arbeitsweise
 
 - Vor groesseren Aenderungen `git status` pruefen. Wie beim
@@ -122,13 +133,15 @@ aendert:
 - die Ablauflogik/Entscheidungspunkte (siehe oben, Diagramm-Pflicht),
 - die Git- oder Ressourcenschonende Arbeitsweise,
 - die Aufwandskennzahl-Referenzwerte, falls sich der typische
-  Session-Einstieg deutlich aendert.
+  Session-Einstieg deutlich aendert,
+- eine Architekturentscheidung - dann das zugehoerige ADR aktualisieren,
+  nicht nur `AGENTS.md`/den Code.
 
 Pruffrage am Ende groesserer Arbeiten:
 
 ```text
-Muss AGENTS.md oder WorkflowDescription.md angepasst werden, damit eine
-neue Agentensession korrekt und ressourcenschonend einsteigen kann?
+Muss AGENTS.md, WorkflowDescription.md oder ein ADR angepasst werden, damit
+eine neue Agentensession korrekt und ressourcenschonend einsteigen kann?
 ```
 
 ## Siehe auch
@@ -142,3 +155,4 @@ neue Agentensession korrekt und ressourcenschonend einsteigen kann?
 - `DATABASE.md` - `experiments.db`-Schema und Abfragen.
 - `DEVIANCE_MEASURES.md` - Poisson-/Tweedie-Devianz-Theorie und -Nutzung.
 - `NEURAL_DEPLOY.md` - R-only-Policy und Python-GPU-Export fuer neuronale Modelle.
+- `adr/` - Architekturentscheidungen (siehe oben).

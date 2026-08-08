@@ -100,3 +100,16 @@ aus** - die Policy wird hier vorsorglich uebernommen (die zugrunde liegende
 Kaggle-R-GPU-Sackgasse ist aufgabentyp-unabhaengig), aber ohne eigene
 Regressions-Zahlen. Bei der ersten Regressions-Anwendung diesen Abschnitt mit
 echten Werten ergaenzen.
+
+## Querverweis: CPU-Laufzeit-Beleg gegen Voll-Training (nur Klassifikation, s6e8, 2026-08-08)
+
+Ebenfalls noch ohne eigene Regressions-Bestaetigung, aber mechanismus-
+unabhaengig vom Aufgabentyp (reine Torch-CPU-Trainingsgeschwindigkeit):
+im Klassifikations-Template brauchte ein FT-Transformer-Prototyp fuer nur
+15 Epochen/`d_token=64` auf 20% der s6e8-Daten bereits ~33 Minuten CPU-Zeit
+- weit unter Kaggle-Produktionseinstellungen (40-80 Epochen, volle Daten),
+hochgerechnet mehrere Stunden. Details, Zahlen und die daraus abgeleitete
+30-Minuten-Faustregel siehe `NEURAL_DEPLOY.md` im Klassifikations-Template
+sowie `adr/002-r-only-python-gpu-export.md` (hier wie dort). Gilt bis zur
+ersten Regressions-eigenen Messung als plausibler Richtwert, nicht als
+bestaetigte Zahl fuer Regressionsmodelle.

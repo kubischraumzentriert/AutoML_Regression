@@ -124,6 +124,29 @@ Count-/Tweedie-Projekt sie bestaetigt.
 
 ---
 
+## Herkunft: ADR-Aufraeumung (2026-08-08)
+
+14. **Zwei implizite Architekturentscheidungen als ADR-Kandidaten
+    vorgemerkt, noch nicht umgesetzt**: (a) `targets`-Pipeline deckt bewusst
+    nur den finalen Produktionspfad ab, die explorativen Skripte bleiben
+    ausserhalb des Graphen - bisher nur in `README.md`-Prosa begruendet;
+    (b) beide Templates (Klassifikation/Regression) halten ihr
+    `experiments.db`-Schema bewusst identisch, um kuenftige Cross-Template-
+    Analysen/-Merges zu ermoeglichen - ebenfalls nur Prosa. Beide erfuellen
+    das Befoerderungs-Kriterium aus `adr/README.md` (echte Alternative +
+    versehentlich umkehrbar), aber noch nicht zu eigenen ADR-Dateien
+    ausgebaut - niedrige Prioritaet, keine akute Verwechslungsgefahr
+    beobachtet.
+15. **`merge_project_experiments.R` in diesem Repo war bis 2026-08-08 eine
+    unangepasste Kopie der Klassifikations-Version** (falsches `target_db_path`,
+    zeigte auf die Klassifikations-DB statt auf dieses Repo) - im selben Zug
+    wie die Auto-Discovery-Uebernahme (siehe `adr/001-local-project-db-central-
+    merge.md`) korrigiert und getestet. Als Lektion vorgemerkt: Datei-Kopien
+    zwischen den Templates immer auf hartcodierte, nicht mitkopierte Pfade
+    pruefen, nicht nur auf inhaltliche Anpassung.
+
+---
+
 ## Aufnahme-Kriterium erfuellt? → hier abhaken und ins Template verschieben
 
 | Kandidat | 2. Projekt / No-op-Beleg | Status |
@@ -141,3 +164,5 @@ Count-/Tweedie-Projekt sie bestaetigt.
 | 11 Metrik-Angemessenheits-A/B | tweet (1) | offen |
 | 12 Durable Befunde (Doku) | tweet (1) | offen |
 | 13 kumulative Top-k-Importance-Schwelle | openml-bike-sharing (1) | offen |
+| 14 ADR-Kandidaten (targets-Scope, gemeinsames Schema) | – | offen |
+| 15 Datei-Kopien auf hartcodierte Pfade pruefen (Lektion) | – | erledigt (Fix) |
