@@ -147,6 +147,37 @@ Count-/Tweedie-Projekt sie bestaetigt.
 
 ---
 
+## Herkunft: "Automated Machine Learning"-Buch (Hutter/Kotthoff/Vanschoren 2019)
+
+16. **Caruana-Greedy-Ensemble-Selection - im Klassifikations-Template
+    bereits 2-Projekt-bestaetigt (2026-08-08), hier noch KEINE eigene
+    Regressions-Bestaetigung.** Statt ein Einzelmodell zu waehlen oder
+    wenige Modelle gleichzugewichten, einen Pool bereits trainierter
+    Modelle per gieriger Vorwaertsauswahl (mit Wiederholung, Caruana et al.
+    2004, wie in Auto-sklearn) zu einem Ensemble kombinieren. Im
+    Klassifikations-Template an zwei OpenML-Datensaetzen (bank-marketing,
+    electricity) verifiziert: schlaegt in beiden Faellen das beste
+    Einzelmodell UND deutlich staerker den naiven Gleichgewichts-Blend
+    (Details, Zahlen, Integrationsaufwand siehe dortiges `TARGETS.md`).
+    Mechanismus ist metrik-/aufgabentyp-unabhaengig (funktioniert genauso
+    fuer RMSE/Devianz statt AUC), aber nach unserer eigenen Regel (ADR 003
+    im Klassifikations-Template) zaehlt die Bestaetigung dort nicht
+    automatisch hier - eigener Verifikationslauf noetig, bevor es hier
+    backported wird. 0-Projekt-Kandidat fuer Regression.
+17. **Meta-Learning-Warmstart fuer Tuning aus der zentralen `experiments.db`**
+    (Kap. 2/6 des Buchs) - Meta-Features des neuen Datensatzes berechnen,
+    aehnlichste Projekte in der zentralen DB finden, deren beste bekannte
+    Konfigurationen als Tuning-Startpunkt nutzen statt reinem Zufall. Noch
+    nicht geprueft, weder hier noch im Klassifikations-Template.
+    0-Projekt-Kandidat.
+18. **Successive Halving/Hyperband fuer `100_lightgbm_tuning.R`** (Kap. 1.4
+    des Buchs) - Kandidaten mit kleinem Budget starten, schlechtere Haelfte
+    verwerfen, Budget verdoppeln, wiederholen, statt jede Kandidaten-
+    konfiguration voll zu evaluieren. Noch nicht geprueft. 0-Projekt-
+    Kandidat.
+
+---
+
 ## Aufnahme-Kriterium erfuellt? → hier abhaken und ins Template verschieben
 
 | Kandidat | 2. Projekt / No-op-Beleg | Status |
@@ -166,3 +197,6 @@ Count-/Tweedie-Projekt sie bestaetigt.
 | 13 kumulative Top-k-Importance-Schwelle | openml-bike-sharing (1) | offen |
 | 14 ADR-Kandidaten (targets-Scope, gemeinsames Schema) | – | offen |
 | 15 Datei-Kopien auf hartcodierte Pfade pruefen (Lektion) | – | erledigt (Fix) |
+| 16 Caruana-Greedy-Ensemble-Selection | bestaetigt in Klassifikation (2), hier (0) | offen |
+| 17 Meta-Learning-Warmstart aus zentraler DB | – | offen |
+| 18 Successive Halving/Hyperband fuers Tuning | – | offen |
