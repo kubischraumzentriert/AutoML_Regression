@@ -90,6 +90,24 @@ full_holdout_predictions_path <- file.path(artifact_dir, "full_holdout_confirmat
 segment_metric_cols <- character()
 segment_metrics_path <- file.path(artifact_dir, "segment_metrics.csv")
 
+# Split-Conformal Prediction Intervals (128_conformal_prediction_intervals.R,
+# siehe conformal_prediction.R): retrofit-faehige, verteilungsfreie
+# Prediction-Intervals auf einem bereits trainierten Punktvorhersage-Modell
+# (kein erneutes Training), verifiziert an synthetischer Ground Truth
+# (homo-/heteroskedastisch haelt Coverage, Distribution-Shift bricht sie
+# sichtbar - siehe BACKLOG.md). Default NA -> uebersprungen, kein Eingriff
+# in die bestehende Holdout-Bestaetigung.
+# conformal_target_coverage: Ziel-Coverage (z.B. 0.90 fuer 90%), NA = aus.
+# conformal_calib_ratio: Anteil des 120-Holdouts fuer die Kalibrierung
+# (Rest = Coverage-Pruefmenge), muss disjunkt von der Eval-Menge sein.
+# conformal_prediction_col: welche Spalte aus full_holdout_predictions_path
+# kalibriert wird; NA = automatisch die beste (niedrigster RMSE) laut
+# full_holdout_results_path.
+conformal_target_coverage <- NA_real_
+conformal_calib_ratio <- 0.5
+conformal_prediction_col <- NA_character_
+conformal_intervals_path <- file.path(artifact_dir, "conformal_prediction_intervals.csv")
+
 # `100_lightgbm_tuning.R` bestimmt die Variante per CV und speichert sie in
 # `lightgbm_selection_path`; nachfolgende Schritte lesen dieses Artefakt.
 submission_model_name <- "lightgbm_selected"

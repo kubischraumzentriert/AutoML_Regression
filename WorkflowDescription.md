@@ -70,11 +70,15 @@ flowchart TD
 
     HoldoutConfirm --> DSegment{"segment_metric_cols gesetzt?"}
     DSegment -- "ja" --> SegmentMetrics["125_segment_metrics.R<br/>Holdout-Metriken je Segment"]
-    DSegment -- "nein" --> NeuralGate
+    DSegment -- "nein" --> DConformal
     SegmentMetrics --> DSegBad{"Wichtige Segmente<br/>auffaellig schlecht?"}
     DSegBad -- "ja" --> SegmentNote["Segment-Blend/Postprocessing als<br/>Folgeexperiment vormerken (BACKLOG.md)"]
-    DSegBad -- "nein" --> NeuralGate
-    SegmentNote --> NeuralGate
+    DSegBad -- "nein" --> DConformal
+    SegmentNote --> DConformal
+    DConformal{"conformal_target_coverage gesetzt?"}
+    DConformal -- "ja" --> ConformalIntervals["128_conformal_prediction_intervals.R<br/>Split-Conformal Prediction Intervals"]
+    DConformal -- "nein" --> NeuralGate
+    ConformalIntervals --> NeuralGate
 
     NeuralGate{"Optional, NEURAL_DEPLOY.md:<br/>GBMs zu korreliert, ca. 0.99,<br/>Blend bringt kaum mehr?"}
     NeuralGate -- "nein" --> FullTrain
@@ -112,6 +116,9 @@ flowchart TD
 11. `120_full_holdout_confirmation.R` bestaetigt die zuvor gewaehlte LightGBM-Variante, CatBoost und den festen OOF-Blend auf allen Daten per separatem 80/20-Holdout.
 12. `125_segment_metrics.R` berechnet optionale Segmentmetriken fuer konfigurierte
     Spalten aus `segment_metric_cols`.
+12b. `128_conformal_prediction_intervals.R` berechnet optional Split-Conformal
+    Prediction Intervals (`conformal_target_coverage`), baut auf dem
+    `120`-Holdout auf, kein erneutes Training.
 13. `150_train_full_model.R` trainiert die zuvor gewaehlte LightGBM-Variante auf allen Daten.
 14. `155_predict_submission.R` schreibt die Kaggle-Submission.
 15. `158_check_submission_diff.R` prueft optional, ob eine neue Submission wirklich
@@ -153,6 +160,13 @@ Regression-Projekt rueckgefuehrt wurden:
   strukturell unterschiedlich sind.
 - Segmentmetriken: Wenn `segment_metric_cols` gesetzt ist, werden Holdout-
   Vorhersagen nach fachlichen Risiko- oder Availability-Gruppen ausgewertet.
+- Conformal Prediction Intervals: Wenn `conformal_target_coverage` gesetzt
+  ist, erzeugt `128_conformal_prediction_intervals.R` verteilungsfreie
+  Prediction-Intervals mit endlich-Stichproben-Coverage-Garantie auf dem
+  `120`-Holdout (Split-Conformal, kein erneutes Training, siehe
+  `conformal_prediction.R` fuer Methodik). Coverage-Warnung bei Abweichung
+  > 0.05 vom Ziel deutet auf Distribution Shift zwischen Kalibrierungs- und
+  Pruefmenge hin (Exchangeability verletzt).
 - Submission-Diff-Check: Vor einem Leaderboard-Versuch kann geprueft werden,
   ob die neue Datei ueberhaupt andere Predictions als eine Referenz enthaelt.
 

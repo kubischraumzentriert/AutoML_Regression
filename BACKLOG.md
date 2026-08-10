@@ -202,6 +202,34 @@ Count-/Tweedie-Projekt sie bestaetigt.
 
 ---
 
+## Herkunft: Literaturbewertung Traceability/Produktion-KI (`C:\Git\literatur`) - ERLEDIGT
+
+20. **Conformal Prediction Intervals: prototypisiert, verifiziert UND ins
+    Template eingebaut (2026-08-10).** Aus dem MLOps/Uncertainty-
+    Quantification-Semiconductor-Paper (arXiv 2605.07752, siehe
+    `C:\Git\literatur\bewertung.md`): Split-Conformal liefert verteilungsfreie
+    Prediction-Intervals mit endlich-Stichproben-Coverage-Garantie, retrofit-
+    faehig auf ein bereits trainiertes Punktvorhersage-Modell (kein
+    erneutes Training). Neue Datei `conformal_prediction.R` (3 generische
+    Funktionen: `split_conformal_calibrate()`, `split_conformal_predict_
+    interval()`, `check_conformal_coverage()`), `128_conformal_prediction_
+    intervals.R` (optional, `conformal_target_coverage` default `NA` ->
+    uebersprungen, baut auf `120_full_holdout_confirmation.R` auf).
+    **Ground-Truth-Verifikation** (synthetisch, analog zur Leak-Audit-
+    Methodik): homoskedastisches Rauschen haelt Coverage (empirisch 0.884
+    vs. Ziel 0.900), heteroskedastisches Rauschen haelt Coverage TROTZDEM
+    (0.911 vs. 0.900 - Validitaet ist unabhaengig von Heteroskedastizitaet,
+    nur die Intervallbreite waechst), ein simulierter Distribution-Shift
+    zwischen Kalibrierungs- und Pruefmenge bricht die Garantie sichtbar
+    (0.260 vs. 0.900 Ziel) - bestaetigt die theoretische Exchangeability-
+    Voraussetzung. End-to-end gegen das Template-eigene Projekt
+    (road-accident-risk) regressionsgetestet: empirische Coverage 0.901 bei
+    Ziel 0.900 (n=51775), unauffaellig. Kein zweites Projekt noetig (anders
+    als bei heuristischen Guards) - die Methode ist mathematisch
+    verteilungsfrei-gueltig, nicht datensatzspezifisch zu bestaetigen.
+
+---
+
 ## Aufnahme-Kriterium erfuellt? → hier abhaken und ins Template verschieben
 
 | Kandidat | 2. Projekt / No-op-Beleg | Status |
