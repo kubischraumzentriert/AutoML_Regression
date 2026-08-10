@@ -178,6 +178,30 @@ Count-/Tweedie-Projekt sie bestaetigt.
 
 ---
 
+## Herkunft: "Introducing MLOps"-Buch (Treveil/Dataiku 2020) - ERLEDIGT
+
+19. **Univariate Drift-Tests: geprueft, verifiziert UND ins Template
+    zurueckgefuehrt (2026-08-08).** Kap. 7 des Buchs: Domain-Classifier
+    (== unsere Adversarial Validation) und univariate statistische Tests
+    (Kolmogorov-Smirnov je stetigem Feature, Chi-Quadrat je kategorialem
+    Feature, Benjamini-Hochberg-korrigiert) sind komplementaer - die
+    Adversarial-AUC sagt nur "insgesamt trennbar", die univariaten Tests
+    sagen WELCHE Features driften, mit Effektgroesse. Im Klassifikations-
+    Template an 2 unabhaengigen OpenML-Datensaetzen/3 Szenarien (echter
+    Zeit-Drift, Zufalls-Kontrolle, konstruierter Drift) verifiziert -
+    Zahlen und Details siehe dortiges `TARGETS.md`. Neues, generisches
+    Modul `univariate_drift.R` (identisch in beide Templates uebernommen,
+    aufgabentyp-unabhaengig - reine Statistik auf zwei Datensaetzen mit
+    gleichen Spalten), eingebunden in `018_adversarial_validation.R`
+    direkt nach dem bestehenden Ergebnis-Speichern-Block. Neue Config-
+    Variablen `univariate_drift_results_path`/`univariate_drift_alpha` in
+    `000_config.R`. End-to-end gegen das Template-eigene Projekt
+    (road-accident-risk) regressionsgetestet: 0/12 Features signifikant,
+    konsistent mit der unauffaelligen Adversarial-AUC (~0.499) - genau das
+    erwartete Spezifitaets-Verhalten. Details siehe `WORKFLOW_GUARDS.md`.
+
+---
+
 ## Aufnahme-Kriterium erfuellt? → hier abhaken und ins Template verschieben
 
 | Kandidat | 2. Projekt / No-op-Beleg | Status |
@@ -200,3 +224,4 @@ Count-/Tweedie-Projekt sie bestaetigt.
 | 16 Caruana-Greedy-Ensemble-Selection | bestaetigt in Klassifikation (2), hier (0) | offen |
 | 17 Meta-Learning-Warmstart aus zentraler DB | – | offen |
 | 18 Successive Halving/Hyperband fuers Tuning | – | offen |
+| 19 Univariate Drift-Tests (`univariate_drift.R`) | Klassifikation (2) + hier (eigener Regressionstest) | erledigt |

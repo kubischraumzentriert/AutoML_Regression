@@ -68,6 +68,41 @@ Outputs:
 
 - `_artifacts/adversarial_validation_results.csv`
 - `_artifacts/adversarial_validation_predictions.csv`
+- `_artifacts/univariate_drift_results.csv`
+
+### Univariate Drift-Tests (Ergaenzung, `univariate_drift.R`)
+
+Laeuft direkt im Anschluss an die Adversarial Validation, auf derselben
+Stichprobe (`train_sample`/`test_sample`). Je Feature ein Kolmogorov-Smirnov-
+Test (stetig) oder Chi-Quadrat-Test (kategorial), Benjamini-Hochberg-korrigiert
+ueber alle Features. Ergaenzt die Adversarial-AUC um eine Pro-Feature-Diagnose:
+die AUC sagt nur "insgesamt trennbar ja/nein/wie stark", die univariaten Tests
+sagen WELCHE Features driften (mit Effektgroesse, KS-D bzw. Cramers V, je 0-1).
+
+**Wichtig**: p-Wert und Effektgroesse zusammen lesen, nicht nur den p-Wert -
+bei grossen Datensaetzen wird sonst auch eine praktisch irrelevante Abweichung
+"signifikant" (im Klassifikations-Template z.B. ein Feature mit
+p_adj_BH ~1e-297, aber Cramers V nur 0.037 - siehe dortiges `TARGETS.md`).
+
+Zurueckgefuehrt aus dem Klassifikations-Template (Herkunft: "Introducing
+MLOps", Treveil/Dataiku 2020, Kap. 7 - Domain-Classifier == unsere Adversarial
+Validation, univariate Tests sind komplementaer). Verifiziert an 2 unabhaengigen
+OpenML-Datensaetzen/3 Szenarien (echter Zeit-Drift, Zufalls-Kontrolle,
+konstruierter Drift) im Klassifikations-Template, dort end-to-end getestet;
+hier end-to-end gegen das Template-eigene Projekt (road-accident-risk)
+regressionsgetestet (0/12 Features signifikant, konsistent mit Adversarial-
+AUC ~0.499).
+
+Config:
+
+```r
+univariate_drift_results_path <- file.path(artifact_dir, "univariate_drift_results.csv")
+univariate_drift_alpha <- 0.05
+```
+
+Outputs:
+
+- `_artifacts/univariate_drift_results.csv`
 
 ## 3. Segment Metrics
 

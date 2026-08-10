@@ -9,6 +9,7 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "040_preprocessing.R"))
+source(file.path(project_dir, "univariate_drift.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
@@ -85,3 +86,11 @@ cat("- ESS/n klein: Propensity-Gewichte waeren instabil.\n")
 cat("\nGespeichert:\n")
 cat("Ergebnisse :", adversarial_validation_results_path, "\n")
 cat("Predictions:", adversarial_validation_prediction_path, "\n")
+
+# --- Univariate Drift-Tests (siehe univariate_drift.R) ----------------------
+# Ergaenzt die Adversarial-AUC: sagt WELCHE Features driften (mit
+# Effektgroesse), nicht nur ob insgesamt trennbar. Nutzt dieselbe Stichprobe
+# wie die Adversarial Validation oben (train_sample/test_sample), nur ohne
+# die dataset_origin-Hilfsspalte.
+report_univariate_drift(train_sample[, ..feature_cols], test_sample[, ..feature_cols],
+                        univariate_drift_results_path, alpha = univariate_drift_alpha)

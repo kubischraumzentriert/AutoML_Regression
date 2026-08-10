@@ -44,7 +44,7 @@ flowchart TD
     SignalDiag --> DSignal{"Mittelwertreferenz bereits auf Niveau<br/>von rpart/Ranger/Boosting-Modell?<br/>Signal-Gate"}
     DSignal -- "ja, kein Signal" --> MeanSub["165_mean_submission.R,<br/>KEIN Tuning/Ensemble bis neue Info<br/>oder veraenderte Feature-Repraesentation"]
     MeanSub --> LogKaggle["160_log_kaggle_submission.R<br/>submission_candidate = target_mean"]
-    DSignal -- "nein, Signal vorhanden" --> AdvVal["018_adversarial_validation.R<br/>Train vs. Test unterscheidbar?"]
+    DSignal -- "nein, Signal vorhanden" --> AdvVal["018_adversarial_validation.R<br/>Train vs. Test unterscheidbar?<br/>+ univariate Drift-Tests je Feature"]
 
     AdvVal --> DAdv{"Adversarial-AUC?"}
     DAdv -- "um 0.50" --> Baselines
