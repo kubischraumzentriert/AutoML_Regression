@@ -228,6 +228,40 @@ Count-/Tweedie-Projekt sie bestaetigt.
     als bei heuristischen Guards) - die Methode ist mathematisch
     verteilungsfrei-gueltig, nicht datensatzspezifisch zu bestaetigen.
 
+21. **Huyen-Sanity-Checks (Perturbation/Invarianz/Directional Expectation):
+    aus dem Klassifikations-Template uebertragen (2026-08-10).** Waren dort
+    bereits an synthetischer Ground Truth + 2 realen Projekten (health_
+    condition, drivendata-pump-it-up) bestaetigt (siehe dortiges TARGETS.md).
+    `sanity_checks.R` wurde dabei aufgabentyp-unabhaengig generalisiert
+    (`higher_is_better`-Flag fuer `run_perturbation_test()` statt impliziter
+    BAcc-Annahme; `run_invariance_test()` erkennt jetzt numerische vs.
+    kategoriale Response automatisch; neues `build_numeric_shift_fn()` mit
+    Integer-Typ-Erhalt) und identisch in beide Templates uebernommen -
+    Generalisierung an synthetischen Regressions-Beispielen nachverifiziert
+    (RMSE-Drop korrekt vorzeichenrichtig, numerische Invarianz sauber
+    getrennt: sauberes vs. leaky-lm-Modell 0.0 vs. 0.9996 flip_rate).
+    **Voraussetzung geschaffen**: `120_full_holdout_confirmation.R` speicherte
+    bisher nur Vorhersagen, keine Learner-Objekte - fuer frische Vorhersagen
+    auf perturbierten Daten ergaenzt um `full_holdout_models_path`
+    (Learner+Holdout-Featuredaten), additiv, bestehende Outputs unveraendert.
+    Neues `126_sanity_checks.R` (optional, baut auf diesem Artefakt auf,
+    kein erneutes Training). **Echter Befund beim Regressionstest gegen
+    road-accident-risk**: Perturbation (`curvature`) unauffaellig (Drop
+    0.0008). Invarianz (`public_road`) zeigte zunaechst eine irrefuehrend
+    hohe flip_rate (0.499) bei winziger `mean_abs_change` (0.0009) - bei
+    einem grossen Boosting-Ensemble reicht ein einziger Baum, der die Spalte
+    irgendwo nutzt, fuer eine (belanglose) Aenderung. Neue Config
+    `invariance_warn_magnitude_threshold` gated die Warnung zusaetzlich auf
+    die Aenderungsgroesse (nur bei numerischer Response relevant, bei
+    Klassifikation ignoriert). Directional (`num_reported_accidents` +1,
+    `speed_limit` +10, beide "increasing"): reproduziert dasselbe Muster wie
+    in der Klassifikation - Richtung im Mittel korrekt, aber
+    `num_reported_accidents` zeigt 10.2% aller Zeilen mit substanzieller
+    (>0.05) Verletzung (WARNUNG), `speed_limit` praktisch keine (0.01%,
+    unauffaellig trotz 22.2% technischer violation_rate) - **dritte
+    unabhaengige Bestaetigung** desselben Tree-Ensemble-Nichtmonotonie-
+    Musters (nach health_condition und PumpItUp).
+
 ---
 
 ## Aufnahme-Kriterium erfuellt? → hier abhaken und ins Template verschieben

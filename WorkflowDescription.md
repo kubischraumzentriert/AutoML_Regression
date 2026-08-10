@@ -70,11 +70,15 @@ flowchart TD
 
     HoldoutConfirm --> DSegment{"segment_metric_cols gesetzt?"}
     DSegment -- "ja" --> SegmentMetrics["125_segment_metrics.R<br/>Holdout-Metriken je Segment"]
-    DSegment -- "nein" --> DConformal
+    DSegment -- "nein" --> DSanity
     SegmentMetrics --> DSegBad{"Wichtige Segmente<br/>auffaellig schlecht?"}
     DSegBad -- "ja" --> SegmentNote["Segment-Blend/Postprocessing als<br/>Folgeexperiment vormerken (BACKLOG.md)"]
-    DSegBad -- "nein" --> DConformal
-    SegmentNote --> DConformal
+    DSegBad -- "nein" --> DSanity
+    SegmentNote --> DSanity
+    DSanity{"perturbation_/invariance_test_cols oder<br/>directional_expectation_specs gesetzt?"}
+    DSanity -- "ja" --> SanityChecks["126_sanity_checks.R<br/>Perturbation/Invarianz/Directional"]
+    DSanity -- "nein" --> DConformal
+    SanityChecks --> DConformal
     DConformal{"conformal_target_coverage gesetzt?"}
     DConformal -- "ja" --> ConformalIntervals["128_conformal_prediction_intervals.R<br/>Split-Conformal Prediction Intervals"]
     DConformal -- "nein" --> NeuralGate
@@ -116,7 +120,11 @@ flowchart TD
 11. `120_full_holdout_confirmation.R` bestaetigt die zuvor gewaehlte LightGBM-Variante, CatBoost und den festen OOF-Blend auf allen Daten per separatem 80/20-Holdout.
 12. `125_segment_metrics.R` berechnet optionale Segmentmetriken fuer konfigurierte
     Spalten aus `segment_metric_cols`.
-12b. `128_conformal_prediction_intervals.R` berechnet optional Split-Conformal
+12b. `126_sanity_checks.R` berechnet optional Perturbation-/Invarianz-/
+    Directional-Expectation-Tests (`perturbation_test_cols`/
+    `invariance_test_cols`/`directional_expectation_specs`), baut auf dem
+    `120`-Holdout-Modelle-Artefakt auf, kein erneutes Training.
+12c. `128_conformal_prediction_intervals.R` berechnet optional Split-Conformal
     Prediction Intervals (`conformal_target_coverage`), baut auf dem
     `120`-Holdout auf, kein erneutes Training.
 13. `150_train_full_model.R` trainiert die zuvor gewaehlte LightGBM-Variante auf allen Daten.
@@ -160,6 +168,14 @@ Regression-Projekt rueckgefuehrt wurden:
   strukturell unterschiedlich sind.
 - Segmentmetriken: Wenn `segment_metric_cols` gesetzt ist, werden Holdout-
   Vorhersagen nach fachlichen Risiko- oder Availability-Gruppen ausgewertet.
+- Modell-Sanity-Checks: Wenn `perturbation_test_cols`/`invariance_test_cols`/
+  `directional_expectation_specs` gesetzt sind, prueft
+  `126_sanity_checks.R` Robustheit gegen Rauschen, Unabhaengigkeit von
+  kausal irrelevanten Spalten, und ob die Vorhersage bei einem Feature mit
+  bekannter monotoner Domainbeziehung in die erwartete Richtung geht - aus
+  dem Klassifikations-Template uebernommen (identischer, aufgabentyp-
+  unabhaengiger Mechanismus, siehe `REFERENZ_MODEL_SANITY_CHECKS.md` dort
+  fuer den theoretischen Hintergrund). Kein Metrik-Hebel, reiner Trust-Check.
 - Conformal Prediction Intervals: Wenn `conformal_target_coverage` gesetzt
   ist, erzeugt `128_conformal_prediction_intervals.R` verteilungsfreie
   Prediction-Intervals mit endlich-Stichproben-Coverage-Garantie auf dem

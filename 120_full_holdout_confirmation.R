@@ -60,7 +60,7 @@ fit_and_predict <- function(learner_factory, label) {
   prediction <- learner$predict(task_full, row_ids = test_ids)$response
   elapsed_seconds <- proc.time()[["elapsed"]] - started
   cat(label, "fertig (", round(elapsed_seconds, 1), "s)\n", sep = "")
-  list(response = prediction, elapsed_seconds = elapsed_seconds)
+  list(response = prediction, elapsed_seconds = elapsed_seconds, learner = learner)
 }
 
 lightgbm_result <- fit_and_predict(make_selected_lightgbm, "LightGBM")
@@ -86,6 +86,23 @@ holdout_predictions <- data.table(
 )
 fwrite(results, full_holdout_results_path)
 fwrite(holdout_predictions, full_holdout_predictions_path)
+
+# Modelle+Holdout-Feature-Daten fuer 126_sanity_checks.R (kein erneutes
+# Training dort) - loses Kopplungsmuster wie error_analysis_models.rds im
+# Klassifikations-Template.
+saveRDS(
+  list(
+    target_col_name = target_col,
+    feature_cols = task_full$feature_names,
+    test_ids = test_ids,
+    truth = truth,
+    learner_lightgbm = lightgbm_result$learner,
+    learner_catboost = catboost_result$learner,
+    blend_weight_lightgbm = blend_weight_lightgbm,
+    eval_data = train[test_ids, c(task_full$feature_names, target_col), with = FALSE]
+  ),
+  full_holdout_models_path
+)
 
 db_con <- db_connect()
 db_proj_id <- db_get_or_create_project(db_con, project_name)

@@ -87,6 +87,10 @@ ensemble_oof_predictions_path <- file.path(artifact_dir, "ensemble_oof_predictio
 ensemble_lightgbm_weight <- 0.60
 full_holdout_results_path <- file.path(artifact_dir, "full_holdout_confirmation_results.csv")
 full_holdout_predictions_path <- file.path(artifact_dir, "full_holdout_confirmation_predictions.csv")
+# Speichert die trainierten LightGBM/CatBoost-Learner-Objekte (nicht nur
+# Vorhersagen) - noetig fuer 126_sanity_checks.R, das FRISCHE Vorhersagen auf
+# perturbierten/verschobenen Daten braucht, kein erneutes Training.
+full_holdout_models_path <- file.path(artifact_dir, "full_holdout_confirmation_models.rds")
 segment_metric_cols <- character()
 segment_metrics_path <- file.path(artifact_dir, "segment_metrics.csv")
 
@@ -107,6 +111,46 @@ conformal_target_coverage <- NA_real_
 conformal_calib_ratio <- 0.5
 conformal_prediction_col <- NA_character_
 conformal_intervals_path <- file.path(artifact_dir, "conformal_prediction_intervals.csv")
+
+# Modell-Sanity-Checks (126_sanity_checks.R, siehe sanity_checks.R und
+# REFERENZ_MODEL_SANITY_CHECKS.md im Klassifikations-Template fuer den
+# theoretischen Hintergrund - identisch uebernommen, aufgabentyp-
+# unabhaengig). Bauen auf `full_holdout_models_path` auf (kein erneutes
+# Training). Alle drei Listen default leer -> Skript uebersprungen.
+#
+# sanity_check_model: "lightgbm"/"catboost"/"blend"/NA (NA = automatisch das
+# beste laut RMSE auf dem 120-Holdout).
+sanity_check_model <- NA_character_
+
+# Perturbation: numerische Spalten (MUESSEN dbl-typisiert sein, siehe
+# TARGETS.md/PumpItUp-Erfahrung im Klassifikations-Template). warn_drop ist
+# in Ziel-Einheiten (RMSE-Verschlechterung), projektabhaengig zu justieren.
+perturbation_test_cols <- character(0)
+perturbation_noise_sd_frac <- 0.05
+perturbation_warn_drop <- 0.05
+
+# Invarianz: Spalten ohne vermutete kausale Bedeutung fuer die Zielgroesse
+# (Kandidaten-Check, keine endgueltige Aussage). Bei einer numerischen
+# Response (Regression) ist die reine flip_rate bei einem grossen Boosting-
+# Ensemble oft irrefuehrend hoch (schon EIN Baum, der die Spalte irgendwo
+# nutzt, aendert die Vorhersage minimal) - warn_magnitude_threshold gated
+# zusaetzlich auf die tatsaechliche Aenderungsgroesse (mean_abs_change, in
+# Ziel-Einheiten). Bei kategorialer Response (Klassifikation) wird dieser
+# Schwellwert ignoriert (mean_abs_change ist dort NA).
+invariance_test_cols <- character(0)
+invariance_warn_flip_rate <- 0.05
+invariance_warn_magnitude_threshold <- 0.01
+
+# Directional Expectation: wie im Klassifikations-Template, aber OHNE
+# favorable_class (Regression hat keine Klassen - die rohe Vorhersage wird
+# direkt beobachtet). Jede Spec: feature, type ("numeric"+delta oder
+# "ordinal"+level_order), direction ("increasing"/"decreasing" - Vorhersage
+# soll bei der Verschiebung nicht sinken/steigen).
+directional_expectation_specs <- list()
+directional_warn_violation_rate <- 0.30
+directional_effect_threshold <- 0.05  # in Ziel-Einheiten, projektabhaengig
+directional_warn_effect_share <- 0.05
+sanity_check_results_path <- file.path(artifact_dir, "sanity_check_results.csv")
 
 # `100_lightgbm_tuning.R` bestimmt die Variante per CV und speichert sie in
 # `lightgbm_selection_path`; nachfolgende Schritte lesen dieses Artefakt.
