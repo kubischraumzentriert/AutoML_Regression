@@ -280,6 +280,14 @@ Count-/Tweedie-Projekt sie bestaetigt.
     Familien-Diversitaet: CatBoost/LightGBM/Ranger alle vertreten, nicht wie
     bei health_condition von einer Familie dominiert). Config-Ergaenzung in
     `000_config.R` analog zum Klassifikations-Template.
+    **Offene Luecke (identisch zum Klassifikations-Template)**: `127`/`129`
+    sind nur ein Analyse-/Bestaetigungsschritt - `150_train_full_model.R`/
+    `155_predict_submission.R` koennen bisher nur EINEN benannten
+    `submission_model_name` auf vollen Daten trainieren+deployen, keine
+    gewichtete Multi-Modell-Komposition. Gewinnt das Greedy-Ensemble,
+    fehlt noch ein Deploy-Skript (Arbeitstitel `156_train_full_ensemble.R`/
+    `157_predict_ensemble_submission.R`), das die `best_selected_at_step`-
+    Liste aus `129` uebernimmt.
 
 ---
 

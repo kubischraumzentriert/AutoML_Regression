@@ -84,7 +84,10 @@ flowchart TD
     DConformal -- "nein" --> EnsemblePool
     ConformalIntervals --> EnsemblePool["127_ensemble_candidate_pool.R<br/>24-Modell-Pool (Ranger/LightGBM/CatBoost)"]
     EnsemblePool --> EnsembleSelection["129_ensemble_selection.R<br/>Caruana Greedy Ensemble Selection"]
-    EnsembleSelection --> NeuralGate
+    EnsembleSelection --> DEnsembleWins{"Greedy-Ensemble schlaegt<br/>bestes Einzelmodell (Bestaetigungsmenge)?"}
+    DEnsembleWins -- "ja, aber noch keine Deploy-Automatisierung" --> EnsembleGap["OFFEN: 150/155 koennen bisher nur EINEN\nsubmission_model_name auf vollen Daten\ntrainieren+deployen, keine gewichtete\nMulti-Modell-Komposition - siehe BACKLOG.md"]
+    DEnsembleWins -- "nein" --> NeuralGate
+    EnsembleGap --> NeuralGate
 
     NeuralGate{"Optional, NEURAL_DEPLOY.md:<br/>GBMs zu korreliert, ca. 0.99,<br/>Blend bringt kaum mehr?"}
     NeuralGate -- "nein" --> FullTrain
