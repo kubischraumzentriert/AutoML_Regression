@@ -262,6 +262,25 @@ Count-/Tweedie-Projekt sie bestaetigt.
     unabhaengige Bestaetigung** desselben Tree-Ensemble-Nichtmonotonie-
     Musters (nach health_condition und PumpItUp).
 
+22. **Caruana Greedy Ensemble Selection: aus dem Klassifikations-Template
+    uebertragen (2026-08-11).** Siehe dortiges `REFERENZ_ENSEMBLE_SELECTION.md`
+    fuer den theoretischen Hintergrund (identisch, aufgabentyp-unabhaengig).
+    Neues `127_ensemble_candidate_pool.R` reproduziert den `120`-Train/Test-
+    Split DETERMINISTISCH (gleicher Seed) statt ein weiteres Artefakt
+    einzufuehren - `120`s voller Trainingssplit ist hier ~414k Zeilen (viel
+    groesser als das Klassifikations-Aequivalent, ~55k), daher trainiert der
+    Pool nur auf einer Stichprobe (`ensemble_pool_train_sample_n`, Default
+    50k) - Bewertung bleibt auf dem vollen Test-Split. Neues
+    `129_ensemble_selection.R`: RMSE MINIMIEREN statt BAcc maximieren, sonst
+    identischer Mechanismus (Selektions-/Bestaetigungs-Split). **Ergebnis
+    gegen road-accident-risk (4. unabhaengige Bestaetigung nach bank-
+    marketing/electricity/health_condition)**: bestes Einzelmodell
+    (`catboost_23`) RMSE 0.0565, gleichgewichteter Blend (24) 0.0572
+    (schlechter), **Greedy-Ensemble 0.0564** (50 Modelle, diesmal echte
+    Familien-Diversitaet: CatBoost/LightGBM/Ranger alle vertreten, nicht wie
+    bei health_condition von einer Familie dominiert). Config-Ergaenzung in
+    `000_config.R` analog zum Klassifikations-Template.
+
 ---
 
 ## Aufnahme-Kriterium erfuellt? → hier abhaken und ins Template verschieben

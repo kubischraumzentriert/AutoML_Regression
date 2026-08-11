@@ -152,6 +152,28 @@ directional_effect_threshold <- 0.05  # in Ziel-Einheiten, projektabhaengig
 directional_warn_effect_share <- 0.05
 sanity_check_results_path <- file.path(artifact_dir, "sanity_check_results.csv")
 
+# Caruana-Greedy-Ensemble-Selection (127_ensemble_candidate_pool.R +
+# 129_ensemble_selection.R, siehe REFERENZ_ENSEMBLE_SELECTION.md im
+# Klassifikations-Template fuer den theoretischen Hintergrund - identisch
+# uebernommen). An 2 unabhaengigen OpenML-Datensaetzen verifiziert
+# (bank-marketing/electricity, Klassifikation) und gegen health_condition
+# bestaetigt (Klassifikation) - Backport-Kriterium erfuellt.
+# ensemble_pool_n_per_family: Kandidaten je Modellfamilie (Ranger/LightGBM/
+# CatBoost). Reproduziert den `120`-Holdout-Split deterministisch (gleicher
+# Seed) statt einen neuen Split zu ziehen.
+ensemble_pool_n_per_family <- 8L
+# `120`s vollstaendiger Trainingssplit ist hier ~414k Zeilen (viel groesser
+# als das Klassifikations-Aequivalent, ~55k) - 24 Kandidaten darauf zu
+# trainieren waere nicht mehr im Minutenbereich. ensemble_pool_train_sample_n
+# begrenzt die Trainingsmenge NUR fuer den Kandidaten-Pool (Diversitaet
+# zaehlt hier mehr als Volldaten-Praezision je Kandidat); Bewertung bleibt
+# auf dem vollen Test-Split.
+ensemble_pool_train_sample_n <- 50000L
+ensemble_candidate_pool_path <- file.path(artifact_dir, "ensemble_candidate_pool.rds")
+ensemble_selection_rounds <- 50L
+ensemble_selection_valid_ratio <- 0.5
+ensemble_selection_results_path <- file.path(artifact_dir, "ensemble_selection_results.csv")
+
 # `100_lightgbm_tuning.R` bestimmt die Variante per CV und speichert sie in
 # `lightgbm_selection_path`; nachfolgende Schritte lesen dieses Artefakt.
 submission_model_name <- "lightgbm_selected"

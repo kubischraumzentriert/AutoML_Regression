@@ -81,8 +81,10 @@ flowchart TD
     SanityChecks --> DConformal
     DConformal{"conformal_target_coverage gesetzt?"}
     DConformal -- "ja" --> ConformalIntervals["128_conformal_prediction_intervals.R<br/>Split-Conformal Prediction Intervals"]
-    DConformal -- "nein" --> NeuralGate
-    ConformalIntervals --> NeuralGate
+    DConformal -- "nein" --> EnsemblePool
+    ConformalIntervals --> EnsemblePool["127_ensemble_candidate_pool.R<br/>24-Modell-Pool (Ranger/LightGBM/CatBoost)"]
+    EnsemblePool --> EnsembleSelection["129_ensemble_selection.R<br/>Caruana Greedy Ensemble Selection"]
+    EnsembleSelection --> NeuralGate
 
     NeuralGate{"Optional, NEURAL_DEPLOY.md:<br/>GBMs zu korreliert, ca. 0.99,<br/>Blend bringt kaum mehr?"}
     NeuralGate -- "nein" --> FullTrain
