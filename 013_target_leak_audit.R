@@ -81,6 +81,53 @@ if (length(suspects_importance) > 0) {
   ))
 }
 
+# --- Kumulative Top-k-Erweiterung eines BESTEHENDEN Verdachts (Punkt 13) ----
+# Der Einzelfeature-Check oben uebersieht einen Leak-PARTNER, der knapp unter
+# der Einzelschwelle liegt (Anlass: bike-sharing-Leak `casual`+`registered`==
+# `count` - `registered` allein ueber der Einzelschwelle, `casual` mit ~5%
+# knapp darunter, blieb bisher im "ehrlichen" Feature-Set stehen).
+#
+# WICHTIG: dieser Check laeuft NUR, wenn Schritt 1 bereits mindestens einen
+# Einzelverdaechtigen gefunden hat - er ERWEITERT einen bestehenden Verdacht,
+# er ERZEUGT keinen neuen aus einer sauberen Verteilung. Ohne diese Bedingung
+# markiert der Check faelschlich die staerksten LEGITIMEN Features als
+# verdaechtig, sobald wenige Features gemeinsam den Grossteil der Importance
+# tragen (empirisch beobachtet: road-accident-risk hat 3 legitime Features,
+# die zusammen 88% der Importance tragen, keins einzeln ueber 50% - ohne diese
+# Bedingung waeren sie faelschlich geflaggt worden). Nur die fuehrenden
+# `leak_audit_cumulative_max_k` Features werden ueberhaupt betrachtet.
+importance_dt[, cum_share := cumsum(share)]
+if (length(suspects_importance) == 0) {
+  suspects_cumulative <- character(0)
+  cat("Kein Feature ueber der Einzelschwelle - kumulative Erweiterung uebersprungen (kein Ausgangsverdacht, siehe Kommentar oben).\n")
+} else {
+  top_k_candidates <- importance_dt[seq_len(min(leak_audit_cumulative_max_k, nrow(importance_dt)))]
+  crossing_idx <- which(top_k_candidates$cum_share > leak_audit_cumulative_share_threshold)
+  suspects_cumulative <- if (length(crossing_idx) > 0) {
+    top_k_candidates$feature[seq_len(min(crossing_idx))]
+  } else {
+    character(0)
+  }
+  new_cumulative_suspects <- setdiff(suspects_cumulative, suspects_importance)
+  if (length(new_cumulative_suspects) > 0) {
+    cat(sprintf(
+      "WARNUNG: zusammen mit dem/den bereits verdaechtigen Feature(s) tragen die fuehrenden %d Feature(s)\n",
+      length(suspects_cumulative)
+    ))
+    cat(sprintf(
+      "  (%s) ueber %.0f%% der Gain-Importance - %s NEU gegenueber der Einzelschwelle,\n",
+      paste(suspects_cumulative, collapse = ", "), leak_audit_cumulative_share_threshold * 100,
+      paste(new_cumulative_suspects, collapse = ", ")
+    ))
+    cat("  Verdacht auf ein Leak-PAAR/eine Leak-GRUPPE (nicht nur ein Einzelfeature).\n")
+  } else {
+    cat(sprintf(
+      "Kumulative Top-%d-Schwelle (%.0f%%) bestaetigt nur die bereits per Einzelschwelle Verdaechtigen - kein Zusatzbefund.\n",
+      length(suspects_cumulative), leak_audit_cumulative_share_threshold * 100
+    ))
+  }
+}
+
 # --- Schritt 2: Determinismus (Zielstreuung je Wertgruppe) ------------------
 # Nur Spalten mit ueberschaubarer Kardinalitaet (Kategorien oder kleine
 # numerische Codes) - bei quasi-stetigen Spalten ist jeder Wert quasi
@@ -143,7 +190,7 @@ suspects_determinism <- unique(flagged_determinism$feature)
 # sein sollte -> ohne Konfiguration wird dieser Schritt uebersprungen.
 cat("\n=== Schritt 3: Within-Stratum-Korrelation ===\n")
 numeric_cols <- feature_cols[vapply(train[, ..feature_cols], is.numeric, logical(1))]
-numeric_suspects <- intersect(suspects_importance, numeric_cols)
+numeric_suspects <- intersect(union(suspects_importance, suspects_cumulative), numeric_cols)
 
 if (length(leak_audit_stratify_cols) == 0 || length(numeric_suspects) == 0) {
   cat("Uebersprungen (kein 'leak_audit_stratify_cols' konfiguriert oder keine\n")
@@ -175,7 +222,7 @@ if (length(leak_audit_stratify_cols) == 0 || length(numeric_suspects) == 0) {
 # allen Features, einmal ohne die Verdaechtigen aus Schritt 1+2. Die Differenz
 # quantifiziert, wieviel vom Score "Leak" statt echtes Signal war.
 cat("\n=== Schritt 4: Ehrlich-vs-aufgeblasen-Zerlegung ===\n")
-suspects <- head(union(suspects_importance, suspects_determinism), leak_audit_suspect_top_n)
+suspects <- head(Reduce(union, list(suspects_importance, suspects_cumulative, suspects_determinism)), leak_audit_suspect_top_n)
 
 if (length(suspects) == 0) {
   cat("Keine verdaechtigen Features aus Schritt 1/2 - Audit unauffaellig,\n")

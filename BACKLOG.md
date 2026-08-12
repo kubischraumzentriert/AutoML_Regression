@@ -134,20 +134,41 @@ Count-/Tweedie-Projekt sie bestaetigt.
 ## Herkunft: Sensitivitaetstest Target-Leak-Audit (OpenML 42712 Bike-Sharing)
 
 13. **Kumulative Top-k-Importance-Schwelle fuer `013_target_leak_audit.R`
-    (Schritt 1)** - Anlass: Sensitivitaetstest am bekannten Bike-Sharing-Leak
-    (`casual + registered == count` exakt bei 100% der Zeilen). Der Guard fand
-    den Leak korrekt (`registered` 94.7% Gain-Share > Schwelle, Zerlegung
-    RMSE 3.12 -> 32.50), liess aber `casual` (5.3%, unter der 50%-Einzel-
-    schwelle) in der "ehrlichen" Zerlegung stehen - die berichteten 32.50 RMSE
-    waren selbst noch ~20% zu optimistisch (voll ehrlich: 40.67). **Der Guard
-    prueft nur Einzelfeature-Konzentration, keine gemeinsam wirkenden Leak-
-    Paare/-Gruppen.** Idee: zusaetzlich pruefen, ob die kumulierte Gain-Share
-    der Top-k-Features (k=2,3,...) eine Schwelle ueberschreitet, nicht nur ein
-    einzelnes Feature. Bewusst NICHT sofort umgesetzt - Risiko, legitime,
-    gemeinsam starke (aber nicht leakende) Feature-Gruppen faelschlich
-    auszuschliessen; Schritt 5 (manuelles Urteil) faengt den Rest bereits ab,
-    ein 10-facher RMSE-Sprung provoziert ohnehin weitere Pruefung. 1-Projekt-
-    Kandidat, niedrige Prioritaet.
+    (Schritt 1) - ERLEDIGT, umgesetzt und verifiziert (2026-08-12).** Anlass:
+    Sensitivitaetstest am bekannten Bike-Sharing-Leak (`casual + registered
+    == count` exakt bei 100% der Zeilen). Der Guard fand den Leak korrekt
+    (`registered` 94.7% Gain-Share > Schwelle, Zerlegung RMSE 3.12 -> 32.50),
+    liess aber `casual` (5.3%, unter der 50%-Einzelschwelle) in der
+    "ehrlichen" Zerlegung stehen - die berichteten 32.50 RMSE waren selbst
+    noch ~20% zu optimistisch (voll ehrlich: 40.67). Der Guard pruefte nur
+    Einzelfeature-Konzentration, keine gemeinsam wirkenden Leak-Paare/-Gruppen.
+
+    **Umsetzung**: neuer kumulativer Check in Schritt 1, der die fuehrenden
+    `leak_audit_cumulative_max_k` Features darauf prueft, ob sie ZUSAMMEN
+    ueber `leak_audit_cumulative_share_threshold` (Default 0.98 - bewusst
+    HOCH, nicht 0.80, siehe unten) der Gain-Importance tragen.
+    **Kritische Design-Entscheidung, per Test korrigiert**: der Check laeuft
+    NUR, wenn Schritt 1 bereits mindestens einen Einzelverdaechtigen
+    gefunden hat (`suspects_importance` nicht leer) - er ERWEITERT einen
+    bestehenden Verdacht, statt einen neuen aus einer sauberen Verteilung zu
+    erzeugen. Ohne diese Bedingung (erste Implementierung, direkt widerlegt):
+    road-accident-risk (dieses Repos eigenes Referenzprojekt) hat 3 legitime
+    Features (curvature/lighting/speed_limit), die zusammen 88% der
+    Importance tragen, keins einzeln ueber 50% - ohne die Bedingung waeren
+    diese faelschlich als Leak-Verdacht geflaggt worden (genau das im
+    urspruenglichen Backlog-Eintrag befuerchtete Risiko, empirisch
+    bestaetigt). Mit der Bedingung: road-accident-risk bleibt sauber (kein
+    Einzelverdaechtiger -> Check uebersprungen), bike-sharing findet
+    `casual` korrekt als Leak-Partner (`registered`+`casual` = 100.0% >
+    98%), die Zerlegungs-RMSE landet exakt bei **40.6715** - der zuvor nur
+    manuell erreichbare "voll ehrlich"-Wert.
+
+    Config-Erweiterung in `000_config.R`: `leak_audit_cumulative_share_
+    threshold <- 0.98`, `leak_audit_cumulative_max_k <- 5L`. Verifiziert an
+    2 Faellen (road-accident-risk: kein Falsch-Alarm; bike-sharing-Leak-Test:
+    korrekter Fund) - beide im selben Repo, daher weiterhin technisch
+    1-Projekt-Kandidat fuer die BACKPORT-Regel, aber die Design-Entscheidung
+    selbst ist bereits gegen einen echten False-Positive-Fall gehaertet.
 
 ---
 
@@ -357,7 +378,7 @@ Count-/Tweedie-Projekt sie bestaetigt.
 | 10 Exposure-Offset-Verdrahtung | tweet (1) + dataCar (1) | erledigt (Backport in `000_config.R`/`020_task.R`) |
 | 11 Metrik-Angemessenheits-A/B | tweet (1) | offen |
 | 12 Durable Befunde (Doku) | tweet (1) | offen |
-| 13 kumulative Top-k-Importance-Schwelle | openml-bike-sharing (1) | offen |
+| 13 kumulative Top-k-Importance-Schwelle | openml-bike-sharing (1) + road-accident-risk (Gegenprobe) | erledigt |
 | 14 ADR-Kandidaten (targets-Scope, gemeinsames Schema) | beide Repos (ADR 005/006) | erledigt |
 | 15 Datei-Kopien auf hartcodierte Pfade pruefen (Lektion) | – | erledigt (Fix) |
 | 16 Caruana-Greedy-Ensemble-Selection | bestaetigt in Klassifikation (2) + hier (road-accident-risk) | erledigt (Punkt 22) |

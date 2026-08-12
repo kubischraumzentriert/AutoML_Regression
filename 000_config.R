@@ -58,6 +58,21 @@ univariate_drift_alpha <- 0.05
 # wird geprueft, ob die Zielstreuung INNERHALB einer Wertgruppe nahe Null ist
 # relativ zur Gesamtstreuung (das Feature pinnt den Zielwert nahezu fest).
 leak_audit_importance_share_threshold <- 0.50  # 1 Feature traegt >50% der Gain-Importance
+# Kumulative Top-k-Schwelle (Punkt 13, BACKLOG.md) - faengt ein Leak-PAAR/eine
+# Leak-GRUPPE, bei der kein einzelnes Feature ueber leak_audit_importance_
+# share_threshold liegt, die fuehrenden Features zusammen aber fast die
+# gesamte Importance tragen. leak_audit_cumulative_max_k begrenzt, wie viele
+# fuehrende Features ueberhaupt betrachtet werden - verhindert, dass bei
+# gleichmaessig verteilter Importance am Ende viele Features "verdaechtig"
+# werden (das waere kein Leak-Befund mehr, nur triviale Schwellenerschoepfung).
+# BEWUSST hoch (nicht 80%): der Check soll nur bei FAST VOLLSTAENDIGER
+# Erklaerung greifen (typisch fuer einen exakten Leak wie casual+registered
+# ==count, 100.0%), nicht schon wenn die fuehrenden Features "nur" den
+# groessten Teil der Varianz erklaeren (das kann bei starken legitimen
+# Praediktoren leicht 80-90% erreichen, ohne Leak zu sein - empirisch bei
+# road-accident-risk beobachtet: 3 legitime Top-Features = 88%).
+leak_audit_cumulative_share_threshold <- 0.98
+leak_audit_cumulative_max_k <- 5L
 leak_audit_suspect_top_n <- 8                  # max. Anzahl Verdaechtiger fuer die Zerlegung
 leak_audit_determinism_min_n <- 30             # Mindestgruppengroesse fuer einen Determinismus-Fund
 leak_audit_determinism_sd_ratio <- 0.10        # Gruppen-SD/Gesamt-SD unter dieser Schwelle = verdaechtig
