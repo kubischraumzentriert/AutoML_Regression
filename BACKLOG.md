@@ -149,32 +149,49 @@ Count-/Tweedie-Projekt sie bestaetigt.
 
 ## Herkunft: "Automated Machine Learning"-Buch (Hutter/Kotthoff/Vanschoren 2019)
 
-16. **Caruana-Greedy-Ensemble-Selection - im Klassifikations-Template
-    bereits 2-Projekt-bestaetigt (2026-08-08), hier noch KEINE eigene
-    Regressions-Bestaetigung.** Statt ein Einzelmodell zu waehlen oder
-    wenige Modelle gleichzugewichten, einen Pool bereits trainierter
-    Modelle per gieriger Vorwaertsauswahl (mit Wiederholung, Caruana et al.
-    2004, wie in Auto-sklearn) zu einem Ensemble kombinieren. Im
-    Klassifikations-Template an zwei OpenML-Datensaetzen (bank-marketing,
-    electricity) verifiziert: schlaegt in beiden Faellen das beste
-    Einzelmodell UND deutlich staerker den naiven Gleichgewichts-Blend
-    (Details, Zahlen, Integrationsaufwand siehe dortiges `TARGETS.md`).
-    Mechanismus ist metrik-/aufgabentyp-unabhaengig (funktioniert genauso
-    fuer RMSE/Devianz statt AUC), aber nach unserer eigenen Regel (ADR 003
-    im Klassifikations-Template) zaehlt die Bestaetigung dort nicht
-    automatisch hier - eigener Verifikationslauf noetig, bevor es hier
-    backported wird. 0-Projekt-Kandidat fuer Regression.
-17. **Meta-Learning-Warmstart fuer Tuning aus der zentralen `experiments.db`**
-    (Kap. 2/6 des Buchs) - Meta-Features des neuen Datensatzes berechnen,
-    aehnlichste Projekte in der zentralen DB finden, deren beste bekannte
-    Konfigurationen als Tuning-Startpunkt nutzen statt reinem Zufall. Noch
-    nicht geprueft, weder hier noch im Klassifikations-Template.
-    0-Projekt-Kandidat.
-18. **Successive Halving/Hyperband fuer `100_lightgbm_tuning.R`** (Kap. 1.4
-    des Buchs) - Kandidaten mit kleinem Budget starten, schlechtere Haelfte
-    verwerfen, Budget verdoppeln, wiederholen, statt jede Kandidaten-
-    konfiguration voll zu evaluieren. Noch nicht geprueft. 0-Projekt-
-    Kandidat.
+16. **Caruana-Greedy-Ensemble-Selection - ERLEDIGT, 2 eigene
+    Regressions-Bestaetigungen (2026-08-12).** Statt ein Einzelmodell zu
+    waehlen oder wenige Modelle gleichzugewichten, einen Pool bereits
+    trainierter Modelle per gieriger Vorwaertsauswahl (mit Wiederholung,
+    Caruana et al. 2004, wie in Auto-sklearn) zu einem Ensemble
+    kombinieren. Erst im Klassifikations-Template an zwei OpenML-
+    Datensaetzen (bank-marketing, electricity) verifiziert, dann hierher
+    portiert (`127_ensemble_candidate_pool.R`/`129_ensemble_selection.R`)
+    und an ZWEI eigenen Projekten bestaetigt: **road-accident-risk** (RMSE,
+    Greedy 0.0564 < Einzelmodell 0.0565 < Blend 0.0572) und **tweet**
+    (Poisson-/Tweedie-Devianz + Exposure-Offset, Vollmodell-Deploy auf
+    externem Holdout: Greedy D²=0.115/0.114 vs. Referenz-LightGBM
+    D²=0.081/0.060 - siehe `ML_Learning/tweet/REFERENZ_ENSEMBLE_SELECTION_
+    TWEEDIE.md` und `MLR3_Klassifikation/REFERENZ_ENSEMBLE_SELECTION.md`
+    Abschnitt 4 fuer Details). Bestaetigt: Mechanismus ist metrik-/
+    aufgabentyp-unabhaengig (RMSE UND Devianz, mit Exposure-Offset).
+17. **Meta-Learning-Warmstart fuer Tuning aus der zentralen `experiments.db`
+    - VERALTETER EINTRAG, bereits geprueft mit NEGATIVEM Ergebnis
+    (2026-08-08/10), NICHT weiterverfolgt.** Auto-sklearn-Rezept sauber
+    umgesetzt (Meta-Features, k-naechste Referenz-Datensaetze per
+    L1-Distanz, deren beste LightGBM-Konfiguration als `tnr("mbo")`-
+    Initialdesign injiziert) und fair getestet (Standalone-Skripte in
+    `ML_Learning/openml-drift-detection-test/020_/021_meta_learning_
+    warmstart_test.R`, Referenzpool aus 8 OpenML-Datensaetzen, Baseline vs.
+    Warmstart mit EXAKT demselben Budget, 2 Zieldatensaetze, je 3 Seeds):
+    kein messbarer Effekt (bank-marketing +0.0001 AUC, electricity +0.0002
+    AUC, beides klar innerhalb der Seed-Streuung). Volle Details, Zahlen
+    und Diagnose (Pool zu klein, LightGBM robust gegen Hyperparameterwahl,
+    Budget/Dimensionalitaets-Regime ungeeignet) in
+    `MLR3_Klassifikation/TARGETS.md` Zeile ~594-646. Referenzpool bleibt in
+    der zentralen `experiments.db` als Projekt `meta-learning-reference-
+    pool` erhalten fuer einen moeglichen groesseren Folgeversuch - aber
+    nicht als naechster Schritt priorisiert.
+18. **Successive Halving/Hyperband fuer `100_lightgbm_tuning.R` - VERALTETER
+    EINTRAG, bereits geprueft mit NEGATIVEM/uneindeutigem Ergebnis
+    (2026-08-10), NICHT weiterverfolgt.** Standalone-Skript
+    (`ML_Learning/openml-drift-detection-test/030_successive_halving_
+    test.R`, 16 Kandidaten, Budget-Stufen 25->400, exakt gleiches
+    Gesamtbudget wie Baseline, 2 Datensaetze, 3 Seeds): gegensaetzliche
+    Richtung an beiden Zieldatensaetzen (bank-marketing -0.0015,
+    electricity +0.0025 TEST-AUC), beide Effekte winzig gegenueber der
+    Seed-Streuung. Details in `MLR3_Klassifikation/TARGETS.md` Zeile
+    ~647-666.
 
 ---
 
@@ -317,7 +334,7 @@ Count-/Tweedie-Projekt sie bestaetigt.
 | 13 kumulative Top-k-Importance-Schwelle | openml-bike-sharing (1) | offen |
 | 14 ADR-Kandidaten (targets-Scope, gemeinsames Schema) | – | offen |
 | 15 Datei-Kopien auf hartcodierte Pfade pruefen (Lektion) | – | erledigt (Fix) |
-| 16 Caruana-Greedy-Ensemble-Selection | bestaetigt in Klassifikation (2), hier (0) | offen |
-| 17 Meta-Learning-Warmstart aus zentraler DB | – | offen |
-| 18 Successive Halving/Hyperband fuers Tuning | – | offen |
+| 16 Caruana-Greedy-Ensemble-Selection | bestaetigt in Klassifikation (2) + hier (road-accident-risk) | erledigt (Punkt 22) |
+| 17 Meta-Learning-Warmstart aus zentraler DB | Standalone (2, siehe Punkt 17) | geprueft, negativ, nicht weiterverfolgt |
+| 18 Successive Halving/Hyperband fuers Tuning | Standalone (2, siehe Punkt 18) | geprueft, negativ, nicht weiterverfolgt |
 | 19 Univariate Drift-Tests (`univariate_drift.R`) | Klassifikation (2) + hier (eigener Regressionstest) | erledigt |
