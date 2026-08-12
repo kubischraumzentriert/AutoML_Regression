@@ -173,6 +173,13 @@ ensemble_candidate_pool_path <- file.path(artifact_dir, "ensemble_candidate_pool
 ensemble_selection_rounds <- 50L
 ensemble_selection_valid_ratio <- 0.5
 ensemble_selection_results_path <- file.path(artifact_dir, "ensemble_selection_results.csv")
+# Eindeutige Kandidaten+Gewichte aus 129 (fuer 130_train_full_ensemble.R -
+# retrainiert nur diese, nicht den gesamten Pool, auf vollen Daten).
+ensemble_composition_path <- file.path(artifact_dir, "ensemble_composition.rds")
+final_ensemble_full_path <- function(run_id) {
+  file.path(artifact_dir, paste0("final_model_ensemble_full_", run_id, ".rds"))
+}
+submission_ensemble_path <- file.path(project_dir, "submission_ensemble.csv")
 
 # `100_lightgbm_tuning.R` bestimmt die Variante per CV und speichert sie in
 # `lightgbm_selection_path`; nachfolgende Schritte lesen dieses Artefakt.

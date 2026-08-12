@@ -85,9 +85,9 @@ flowchart TD
     ConformalIntervals --> EnsemblePool["127_ensemble_candidate_pool.R<br/>24-Modell-Pool (Ranger/LightGBM/CatBoost)"]
     EnsemblePool --> EnsembleSelection["129_ensemble_selection.R<br/>Caruana Greedy Ensemble Selection"]
     EnsembleSelection --> DEnsembleWins{"Greedy-Ensemble schlaegt<br/>bestes Einzelmodell (Bestaetigungsmenge)?"}
-    DEnsembleWins -- "ja, aber noch keine Deploy-Automatisierung" --> EnsembleGap["OFFEN: 150/155 koennen bisher nur EINEN\nsubmission_model_name auf vollen Daten\ntrainieren+deployen, keine gewichtete\nMulti-Modell-Komposition - siehe BACKLOG.md"]
+    DEnsembleWins -- "ja" --> EnsembleDeploy["130_train_full_ensemble.R<br/>+ 131_predict_ensemble_submission.R<br/>nur eindeutige Kandidaten, gewichtet gemittelt"]
     DEnsembleWins -- "nein" --> NeuralGate
-    EnsembleGap --> NeuralGate
+    EnsembleDeploy --> SubmissionDone3(["submission_ensemble.csv"])
 
     NeuralGate{"Optional, NEURAL_DEPLOY.md:<br/>GBMs zu korreliert, ca. 0.99,<br/>Blend bringt kaum mehr?"}
     NeuralGate -- "nein" --> FullTrain
@@ -181,6 +181,19 @@ Regression-Projekt rueckgefuehrt wurden:
   dem Klassifikations-Template uebernommen (identischer, aufgabentyp-
   unabhaengiger Mechanismus, siehe `REFERENZ_MODEL_SANITY_CHECKS.md` dort
   fuer den theoretischen Hintergrund). Kein Metrik-Hebel, reiner Trust-Check.
+- Ensemble Selection + Deploy: `127_ensemble_candidate_pool.R` (24-Modell-
+  Pool, trainiert nur auf einer Stichprobe von `120`s Trainingssplit -
+  `ensemble_pool_train_sample_n`, deutlich groesser als beim Klassifikations-
+  Template) + `129_ensemble_selection.R` (Caruana Greedy Ensemble Selection,
+  RMSE minimieren statt BAcc maximieren, sonst identischer Mechanismus wie
+  im Klassifikations-Template - `REFERENZ_ENSEMBLE_SELECTION.md` dort fuer
+  den theoretischen Hintergrund). Gewinnt Greedy, deployen `130_train_full_
+  ensemble.R` (nur eindeutige Kandidaten auf VOLLEN Daten, 9 Mitglieder bei
+  road-accident-risk, 77.6 Min. - Boosting-Modelle deutlich guenstiger als
+  Ranger) + `131_predict_ensemble_submission.R` (gewichteter Durchschnitt,
+  `prediction_bounds`-Clipping wie `155`, schreibt `submission_ensemble.csv`
+  statt `submission.csv`). End-to-end gegen road-accident-risk verifiziert
+  (Zeilenzahl korrekt).
 - Conformal Prediction Intervals: Wenn `conformal_target_coverage` gesetzt
   ist, erzeugt `128_conformal_prediction_intervals.R` verteilungsfreie
   Prediction-Intervals mit endlich-Stichproben-Coverage-Garantie auf dem

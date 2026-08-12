@@ -76,6 +76,21 @@ ensemble_pred_conf <- Reduce(`+`, preds_conf[best_selected_at_step]) / length(be
 ensemble_rmse_conf <- rmse(truth_conf, ensemble_pred_conf)
 cat(sprintf("\nGreedy-Ensemble Bestaetigungs-RMSE: %.4f\n", ensemble_rmse_conf))
 
+# Zusammensetzung fuer 130_train_full_ensemble.R speichern - NUR die
+# eindeutigen Kandidaten + Gewicht (=Anzahl Auswahlen), analog zum
+# Klassifikations-Template (149_ensemble_selection.R).
+unique_selected <- unique(best_selected_at_step)
+selected_composition <- lapply(unique_selected, function(idx) {
+  list(spec = pool$candidate_specs[[idx]], label = pool$labels[idx],
+       weight = sum(best_selected_at_step == idx))
+})
+saveRDS(
+  list(selected_composition = selected_composition, target_col_name = pool$target_col_name,
+       confirmation_rmse = ensemble_rmse_conf),
+  ensemble_composition_path
+)
+cat("Ensemble-Zusammensetzung gespeichert:", ensemble_composition_path, "\n")
+
 # --- Zusammenfassung ---------------------------------------------------------
 summary_dt <- data.table(
   approach = c("best_single", "equal_blend", "greedy_ensemble"),

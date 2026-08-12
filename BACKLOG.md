@@ -280,14 +280,21 @@ Count-/Tweedie-Projekt sie bestaetigt.
     Familien-Diversitaet: CatBoost/LightGBM/Ranger alle vertreten, nicht wie
     bei health_condition von einer Familie dominiert). Config-Ergaenzung in
     `000_config.R` analog zum Klassifikations-Template.
-    **Offene Luecke (identisch zum Klassifikations-Template)**: `127`/`129`
-    sind nur ein Analyse-/Bestaetigungsschritt - `150_train_full_model.R`/
-    `155_predict_submission.R` koennen bisher nur EINEN benannten
-    `submission_model_name` auf vollen Daten trainieren+deployen, keine
-    gewichtete Multi-Modell-Komposition. Gewinnt das Greedy-Ensemble,
-    fehlt noch ein Deploy-Skript (Arbeitstitel `156_train_full_ensemble.R`/
-    `157_predict_ensemble_submission.R`), das die `best_selected_at_step`-
-    Liste aus `129` uebernimmt.
+    **Luecke geschlossen (2026-08-12)**: `129_ensemble_selection.R`
+    speichert jetzt die eindeutigen Kandidaten+Gewichte
+    (`ensemble_composition_path`, analog zum Klassifikations-Template).
+    Neues `130_train_full_ensemble.R` retrainiert nur diese eindeutigen
+    Kandidaten auf dem vollen Trainingsdatensatz (9 Mitglieder bei road-
+    accident-risk: 3 CatBoost/4 LightGBM/2 Ranger, 77.6 Min. - die 2 Ranger-
+    Modelle allein 17.9+56.5 Min., Boosting-Modelle unter 1 Min. je Stueck -
+    deutliche Bestaetigung, dass Boosting-Modelle bei diesem Projekt viel
+    guenstiger auf Volldaten skalieren als Ranger). Neues `131_predict_
+    ensemble_submission.R` mittelt gewichtet, clippt mit `prediction_bounds`
+    (wie `155`), schreibt `submission_ensemble.csv`. End-to-end verifiziert:
+    172585 Zeilen (= test.csv), plausible Vorhersageverteilung. Anders als
+    beim Klassifikations-Template gibt es hier kein Klassengewichtungs-
+    Konzept - der dortige Gewichtungs-Bug (siehe dessen TARGETS.md) betrifft
+    dieses Template nicht.
 
 ---
 
