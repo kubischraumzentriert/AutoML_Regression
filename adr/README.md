@@ -15,6 +15,8 @@ Status-Werte: `Accepted` (gilt), `Proposed` (Vorschlag, noch nicht final),
 | [002](002-r-only-python-gpu-export.md) | R-only-Template, Python nur als wegwerfbarer Kaggle-GPU-Export | Accepted |
 | [003](003-backport-after-confirmation.md) | Template-Aenderungen erst nach ≥2-Projekt-Bestaetigung oder Null-Ergebnis-Beleg backporten | Accepted |
 | [004](004-db-merge-aggregated-tables-only.md) | DB-Merge deckt nur aggregierte Tabellen ab, nicht Zeilenebene (`prediction`/`prediction_prob`) | Accepted |
+| [005](005-targets-covers-production-path-only.md) | `targets`-Pipeline deckt nur den finalen Produktionspfad ab, nicht die explorativen Skripte | Accepted |
+| [006](006-identical-db-schema-across-templates.md) | Beide Templates halten ihr `experiments.db`-Schema bewusst identisch | Accepted |
 
 ## Wann eine implizite Entscheidung zur ADR wird
 

@@ -126,17 +126,16 @@ Count-/Tweedie-Projekt sie bestaetigt.
 
 ## Herkunft: ADR-Aufraeumung (2026-08-08)
 
-14. **Zwei implizite Architekturentscheidungen als ADR-Kandidaten
-    vorgemerkt, noch nicht umgesetzt**: (a) `targets`-Pipeline deckt bewusst
-    nur den finalen Produktionspfad ab, die explorativen Skripte bleiben
-    ausserhalb des Graphen - bisher nur in `README.md`-Prosa begruendet;
-    (b) beide Templates (Klassifikation/Regression) halten ihr
-    `experiments.db`-Schema bewusst identisch, um kuenftige Cross-Template-
-    Analysen/-Merges zu ermoeglichen - ebenfalls nur Prosa. Beide erfuellen
-    das Befoerderungs-Kriterium aus `adr/README.md` (echte Alternative +
-    versehentlich umkehrbar), aber noch nicht zu eigenen ADR-Dateien
-    ausgebaut - niedrige Prioritaet, keine akute Verwechslungsgefahr
-    beobachtet.
+14. **Zwei implizite Architekturentscheidungen zu ADRs ausgebaut, ERLEDIGT
+    (2026-08-12)**: (a) `targets`-Pipeline deckt bewusst nur den finalen
+    Produktionspfad ab, die explorativen Skripte bleiben ausserhalb des
+    Graphen (`adr/005-targets-covers-production-path-only.md`); (b) beide
+    Templates (Klassifikation/Regression) halten ihr `experiments.db`-
+    Schema bewusst identisch, um Cross-Template-Analysen/-Merges zu
+    ermoeglichen - konkret bereits belegt: `tweet`s Poisson-/Tweedie-
+    Projekte liegen dank identischem Schema klaglos in der zentralen
+    Klassifikations-DB (`adr/006-identical-db-schema-across-templates.md`).
+    Beide ADRs in BEIDEN Repos dupliziert (siehe `adr/README.md`).
 15. **`merge_project_experiments.R` in diesem Repo war bis 2026-08-08 eine
     unangepasste Kopie der Klassifikations-Version** (falsches `target_db_path`,
     zeigte auf die Klassifikations-DB statt auf dieses Repo) - im selben Zug
@@ -332,7 +331,7 @@ Count-/Tweedie-Projekt sie bestaetigt.
 | 11 Metrik-Angemessenheits-A/B | tweet (1) | offen |
 | 12 Durable Befunde (Doku) | tweet (1) | offen |
 | 13 kumulative Top-k-Importance-Schwelle | openml-bike-sharing (1) | offen |
-| 14 ADR-Kandidaten (targets-Scope, gemeinsames Schema) | – | offen |
+| 14 ADR-Kandidaten (targets-Scope, gemeinsames Schema) | beide Repos (ADR 005/006) | erledigt |
 | 15 Datei-Kopien auf hartcodierte Pfade pruefen (Lektion) | – | erledigt (Fix) |
 | 16 Caruana-Greedy-Ensemble-Selection | bestaetigt in Klassifikation (2) + hier (road-accident-risk) | erledigt (Punkt 22) |
 | 17 Meta-Learning-Warmstart aus zentraler DB | Standalone (2, siehe Punkt 17) | geprueft, negativ, nicht weiterverfolgt |
