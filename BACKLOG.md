@@ -76,16 +76,30 @@ Template gewandert (default-inert, No-op-Zweig — `deviance_measures.R`,
 Skripte ein bzw. sind datensatzgeformt → bleiben 1-Projekt-Kandidaten, bis ein 2.
 Count-/Tweedie-Projekt sie bestaetigt.
 
-10. **Exposure als echter log-Offset — Verdrahtungs-Helfer.** Drei Wege, alle in
-    tweet verifiziert: (a) nativer mlr3-`offset`-col-role
+10. **Exposure als echter log-Offset — Verdrahtungs-Helfer. 2-Projekt-
+    Kriterium ERFUELLT (2026-08-12), Backport jetzt moeglich.** Drei Wege,
+    zuerst in `tweet` verifiziert: (a) nativer mlr3-`offset`-col-role
     (`task$set_col_roles(col, "offset")`) — von `regr.glm`/`regr.glmnet`/`regr.xgboost`
     bei Training UND Vorhersage genutzt, ueberlebt `po("encode")`; (b) LightGBM
     hat KEINE offset-Property → native API `dtr$set_field("init_score", log(exp))`,
     Predict `mu = exp * response`; (c) Tweedie-GLM braucht base-R
     `glm(family = statmod::tweedie(var.power=p, link.power=0))`, weil mlr3 `regr.glm`
-    kein Family-Objekt akzeptiert. Greift in `020_task.R`/`030_baseline.R`/
-    `080_boosting_benchmark.R` ein → erst als generischer `set_offset()`/init_score-
-    Helfer backporten, wenn ein 2. Projekt die API-Form bestaetigt.
+    kein Family-Objekt akzeptiert. **2. unabhaengiges Projekt**:
+    `ML_Learning/dataCar-exposure-offset-test/` (Standalone, kein Git) -
+    `dataCar` aus dem CRAN-Paket `insuranceData` (Australian Private Auto
+    2004/05, 67.856 Zeilen; NICHT auf OpenML gefunden trotz gruendlicher
+    Suche, aber eine echte unabhaengige Quelle). Beide Wege (a) und (b)
+    bestaetigt: Ratio-Test fuer den mlr3-Offset-Weg exakt 2.0 (identisch zu
+    tweet), LightGBM-`init_score`-Mechanismus funktioniert. **Neuer Befund,
+    ANDERS als bei tweet**: der Offset wirkt hier bei LightGBM messbar
+    (Poisson-Devianz 0.3751 mit vs. 0.3944 ohne Offset, deutlich ausserhalb
+    der gepoolten Fold-SD ~0.0062 - bei tweet war der Effekt nicht messbar,
+    Δ0.0015 « Fold-SD 0.008). Der Nutzen des Offsets ist also
+    datensatzabhaengig - ein zusaetzliches Argument, ihn als generische,
+    immer verfuegbare Option ins Template aufzunehmen statt projektspezifisch
+    zu entscheiden. Naechster Schritt: `set_offset()`/init_score-Helfer
+    tatsaechlich als wiederverwendbare Funktion(en) ins Template backporten
+    (noch nicht umgesetzt, nur das Kriterium erfuellt).
 
 11. **Metrik-Angemessenheits-A/B.** Vier Praediktoren (near_zero / naive_mean /
     null_offset / full) auf RMSE/MAE **vs.** Devianz. Macht messbar, dass bei hoher
