@@ -24,6 +24,15 @@ task_train_small <- as_task_regr(
   id = task_id_prefix
 )
 
+# Exposure/Offset (Punkt 10, BACKLOG.md) - nur wenn ein Projekt offset_col
+# gesetzt hat (Default NULL, siehe 000_config.R). Rueckwirkungsfrei fuer
+# Projekte ohne Exposure-Spalte.
+if (!is.null(offset_col)) {
+  task_train_small <- add_log_offset(task_train_small, offset_col)
+  cat("Exposure-Offset aktiv:", offset_col, "-> Offset-Spalte:",
+      paste(task_train_small$col_roles$offset, collapse = ", "), "\n")
+}
+
 saveRDS(task_train_small, task_train_small_path)
 
 cat("=== mlr3 Regressionstask gespeichert ===\n")

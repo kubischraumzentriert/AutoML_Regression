@@ -204,6 +204,61 @@ final_model_full_path <- function(model_name, run_id) {
   file.path(artifact_dir, paste0("final_model_", model_name, "_full_", run_id, ".rds"))
 }
 
+# --- Exposure/Offset (Punkt 10 im BACKLOG.md, Kriterium erfuellt 2026-08-12) -
+# Fuer Count-/Tweedie-Ziele mit einer Exposure-Spalte (Beobachtungsdauer,
+# Zeit-am-Risiko o.ae.): NICHT als Feature, sondern als log-Offset -
+# modelliert den Erwartungswert BEI GEGEBENER Exposure statt eine rohe Rate
+# zu lernen. Verifiziert an 2 unabhaengigen Projekten (tweet/freMTPL2,
+# dataCar/insuranceData - beide standalone in ML_Learning/, siehe
+# BACKLOG.md Punkt 10 fuer Details/Zahlen).
+#
+# offset_col <- NULL (Default): kein Offset, `add_log_offset()` wird nicht
+# aufgerufen - rueckwirkungsfrei fuer Projekte ohne Exposure-Spalte (wie
+# road-accident-risk hier). Bei Bedarf in einem neuen Projekt auf den
+# Spaltennamen setzen (z.B. "Exposure") UND `020_task.R` ruft dann
+# `add_log_offset()` automatisch auf.
+offset_col <- NULL
+
+# Setzt eine log-Offset-Spalte als nativen mlr3-`offset`-col-role. Wirkt
+# automatisch fuer jeden Learner mit "offset"-Property (regr.glm/
+# regr.glmnet/regr.xgboost) bei Training UND Vorhersage - kein weiterer
+# Eingriff in Benchmark-/Tuning-Skripte noetig, mlr3 nutzt den Offset
+# automatisch, wo unterstuetzt.
+#
+# WICHTIGE GRENZE (verifiziert per Test, siehe BACKLOG.md Punkt 10):
+# regr.lightgbm/regr.catboost haben KEINE offset-Property - mlr3 wirft in
+# `benchmark()` nur eine WARNUNG ("Task hat offset, aber Learner
+# unterstuetzt das nicht, wird ignoriert") und trainiert normal weiter,
+# aber OHNE den Offset zu nutzen (kein Fehler, kein Leck, aber auch kein
+# Nutzen). Ein LightGBM-Modell, das den Offset TATSAECHLICH nutzt, braucht
+# die native `lightgbm`-API (`dtr$set_field("init_score", log(exposure))`,
+# Predict `mu = exposure * response`) AUSSERHALB des normalen
+# `mlr3::benchmark()`-Wegs dieses Templates - siehe `tweet/080_boosting_
+# benchmark.R` fuer ein vollstaendiges Beispiel. Das dort demonstrierte
+# Muster laesst sich nicht 1:1 generisch in dieses Template einbauen, ohne
+# die einheitliche benchmark()-Abstraktion fuer alle anderen Learner
+# aufzugeben - bewusst nicht erzwungen, hier nur dokumentiert.
+add_log_offset <- function(task, offset_col_name) {
+  offset_values <- task$data(cols = offset_col_name)[[offset_col_name]]
+  log_offset_col <- paste0("log_", offset_col_name)
+
+  offset_dt <- data.table(x = log(offset_values))
+  setnames(offset_dt, "x", log_offset_col)
+
+  task_with_offset <- task$clone(deep = TRUE)
+  task_with_offset$cbind(offset_dt)
+  task_with_offset$set_col_roles(log_offset_col, roles = "offset")
+  # Rohe Exposure-Spalte aus den Features entfernen (nicht loeschen) - sonst
+  # bliebe dieselbe Information doppelt im Modell: einmal als Offset, einmal
+  # als normales Feature.
+  task_with_offset$set_col_roles(offset_col_name, roles = character(0))
+
+  stopifnot(!log_offset_col %in% task_with_offset$feature_names,
+            !offset_col_name %in% task_with_offset$feature_names,
+            identical(task_with_offset$col_roles$offset, log_offset_col))
+  task_with_offset
+}
+
 algorithm_from_learner_id <- function(learner_id) {
   algorithms <- c("rpart", "ranger", "lightgbm", "catboost")
   matched <- algorithms[vapply(algorithms, function(algorithm) {

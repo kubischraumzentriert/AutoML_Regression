@@ -76,8 +76,8 @@ Template gewandert (default-inert, No-op-Zweig — `deviance_measures.R`,
 Skripte ein bzw. sind datensatzgeformt → bleiben 1-Projekt-Kandidaten, bis ein 2.
 Count-/Tweedie-Projekt sie bestaetigt.
 
-10. **Exposure als echter log-Offset — Verdrahtungs-Helfer. 2-Projekt-
-    Kriterium ERFUELLT (2026-08-12), Backport jetzt moeglich.** Drei Wege,
+10. **Exposure als echter log-Offset — Verdrahtungs-Helfer. ERLEDIGT,
+    Backport abgeschlossen (2026-08-12).** Drei Wege,
     zuerst in `tweet` verifiziert: (a) nativer mlr3-`offset`-col-role
     (`task$set_col_roles(col, "offset")`) — von `regr.glm`/`regr.glmnet`/`regr.xgboost`
     bei Training UND Vorhersage genutzt, ueberlebt `po("encode")`; (b) LightGBM
@@ -97,9 +97,22 @@ Count-/Tweedie-Projekt sie bestaetigt.
     Δ0.0015 « Fold-SD 0.008). Der Nutzen des Offsets ist also
     datensatzabhaengig - ein zusaetzliches Argument, ihn als generische,
     immer verfuegbare Option ins Template aufzunehmen statt projektspezifisch
-    zu entscheiden. Naechster Schritt: `set_offset()`/init_score-Helfer
-    tatsaechlich als wiederverwendbare Funktion(en) ins Template backporten
-    (noch nicht umgesetzt, nur das Kriterium erfuellt).
+    zu entscheiden. **Backport umgesetzt**: `add_log_offset(task,
+    offset_col_name)` in `000_config.R` (mit Unit-Test verifiziert: rohe
+    Exposure-Spalte wird korrekt aus den Features entfernt, kein
+    Informations-Duplikat; Ratio-Test exakt 2.0). Neuer Config-Wert
+    `offset_col <- NULL` (Default, rueckwirkungsfrei fuer Projekte ohne
+    Exposure - road-accident-risk laeuft unveraendert, verifiziert per
+    `020_task.R`-Rerun). `020_task.R` ruft den Helfer automatisch auf, wenn
+    ein neues Projekt `offset_col` setzt. **Bewusste Grenze dokumentiert**:
+    der Helfer wirkt automatisch fuer jeden Learner mit `offset`-Property
+    (regr.glm/regr.glmnet/regr.xgboost); fuer regr.lightgbm/regr.catboost
+    (keine offset-Property) wirft `mlr3::benchmark()` nur eine Warnung und
+    ignoriert den Offset (verifiziert: kein Fehler, kein Leck, aber auch
+    kein Nutzen) - ein LightGBM-Modell, das den Offset tatsaechlich nutzt,
+    braucht die native `lightgbm`-API ausserhalb der Template-`benchmark()`-
+    Abstraktion (siehe `tweet/080_boosting_benchmark.R`), bewusst NICHT
+    generisch erzwungen.
 
 11. **Metrik-Angemessenheits-A/B.** Vier Praediktoren (near_zero / naive_mean /
     null_offset / full) auf RMSE/MAE **vs.** Devianz. Macht messbar, dass bei hoher
@@ -341,7 +354,7 @@ Count-/Tweedie-Projekt sie bestaetigt.
 | 7 Segment-Blends | – | offen |
 | 8 Residualisierung als Option | – | offen |
 | 9 Segmentbelegung-Check | – | offen |
-| 10 Exposure-Offset-Verdrahtung | tweet (1) | offen |
+| 10 Exposure-Offset-Verdrahtung | tweet (1) + dataCar (1) | erledigt (Backport in `000_config.R`/`020_task.R`) |
 | 11 Metrik-Angemessenheits-A/B | tweet (1) | offen |
 | 12 Durable Befunde (Doku) | tweet (1) | offen |
 | 13 kumulative Top-k-Importance-Schwelle | openml-bike-sharing (1) | offen |
