@@ -114,20 +114,31 @@ Count-/Tweedie-Projekt sie bestaetigt.
     Abstraktion (siehe `tweet/080_boosting_benchmark.R`), bewusst NICHT
     generisch erzwungen.
 
-11. **Metrik-Angemessenheits-A/B.** Vier Praediktoren (near_zero / naive_mean /
-    null_offset / full) auf RMSE/MAE **vs.** Devianz. Macht messbar, dass bei hoher
-    Nullmasse RMSE/MAE ~0-Vorhersagen belohnen und Modelle kaum rangieren, die
-    Devianz aber klar trennt (tweet: RMSE-Spanne +0,4 % vs. Devianz +15497 %; das
-    bessere Modell hatte sogar schlechteren RMSE). Generalisiert zu „ist mein Loss
-    die richtige Metrik?" fuer jedes schiefe/nullmassige Ziel.
+11. **Metrik-Angemessenheits-A/B - als generalisierte Lehre dokumentiert
+    (2026-08-12, siehe `DEVIANCE_MEASURES.md` Abschnitt 1).** Vier
+    Praediktoren (near_zero / naive_mean / null_offset / full) auf RMSE/MAE
+    **vs.** Devianz. Macht messbar, dass bei hoher Nullmasse RMSE/MAE
+    ~0-Vorhersagen belohnen und Modelle kaum rangieren, die Devianz aber
+    klar trennt (tweet: RMSE-Spanne +0,4 % vs. Devianz +15497 %; das
+    bessere Modell hatte sogar schlechteren RMSE). Generalisiert zu „ist
+    mein Loss die richtige Metrik?" fuer jedes schiefe/nullmassige Ziel -
+    bewusst KEIN Code-Helfer (der konkrete Test haengt zu stark vom
+    jeweiligen Loss ab), der Denkansatz selbst ist aber jetzt permanent in
+    `DEVIANCE_MEASURES.md` festgehalten statt nur hier in ephemerer
+    Backlog-Prosa. Weiterhin 1-Projekt-Kandidat fuer einen echten Code-
+    Backport (kein zweiter Datensatz noetig, da kein Code geplant ist).
 
-12. **Durable Befunde (als Doku-Notiz, kein Code):** (a) Offset-Wirkung ist
-    modellklassenabhaengig — linearer GLM profitiert klar, flexibler Boost bei
-    Poisson gar nicht und bei Tweedie sogar negativ (Ursache: niedriges Exposure-
-    Terzil, multiplikative Rate-Korrektur verstaerkt Rauschen). (b) Referenz IMMER
-    auf identischen Folds rechnen (ein Single-Split-GLM vs. 5-fold-Boost drehte das
-    Ergebnis). (c) externer Sanity-Check via D² (skaleninvariant), nicht absolute
-    Devianz (Rate+Gewichte vs. Offset liegen auf verschiedenen Skalen).
+12. **Durable Befunde - uebertragen in `DEVIANCE_MEASURES.md` Abschnitt 7
+    (2026-08-12), ERLEDIGT.** (a) Offset-Wirkung ist modellklassenabhaengig
+    — linearer GLM profitiert klar, flexibler Boost bei Poisson kaum und
+    bei Tweedie sogar negativ (Terzil-Rauschen) - UND datensatzabhaengig
+    (dataCar-Gegenprobe: half LightGBM dort ~5 % Devianz). (b) Referenz
+    IMMER auf identischen Folds rechnen. (c) externer Sanity-Check via D²,
+    nicht absolute Devianz. Plus ein neuer vierter Punkt aus der Ensemble-
+    Selection-Session: eine aggregierte Metrik-Verbesserung ist nicht
+    automatisch eine Verbesserung fuer jede Teilpopulation - vor jedem
+    Vertrauen in eine Gesamtzahl bei einem schiefen Ziel nach Teilgruppen
+    aufschluesseln.
 
 ---
 
@@ -376,8 +387,8 @@ Count-/Tweedie-Projekt sie bestaetigt.
 | 8 Residualisierung als Option | – | offen |
 | 9 Segmentbelegung-Check | – | offen |
 | 10 Exposure-Offset-Verdrahtung | tweet (1) + dataCar (1) | erledigt (Backport in `000_config.R`/`020_task.R`) |
-| 11 Metrik-Angemessenheits-A/B | tweet (1) | offen |
-| 12 Durable Befunde (Doku) | tweet (1) | offen |
+| 11 Metrik-Angemessenheits-A/B | tweet (1) | erledigt (Doku, kein Code geplant) |
+| 12 Durable Befunde (Doku) | tweet (1) + dataCar (Gegenprobe) | erledigt |
 | 13 kumulative Top-k-Importance-Schwelle | openml-bike-sharing (1) + road-accident-risk (Gegenprobe) | erledigt |
 | 14 ADR-Kandidaten (targets-Scope, gemeinsames Schema) | beide Repos (ADR 005/006) | erledigt |
 | 15 Datei-Kopien auf hartcodierte Pfade pruefen (Lektion) | – | erledigt (Fix) |

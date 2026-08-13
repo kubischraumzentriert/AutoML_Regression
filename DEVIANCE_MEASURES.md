@@ -17,7 +17,19 @@ ist die **mittlere Unit-Devianz** die passende Metrik:
   unter der angenommenen Varianzstruktur — RMSE belohnt bei hoher Nullmasse das
   Vorhersagen von ~0 und trennt sinnvolle Modelle kaum (siehe die A/B-Diagnose in
   `BACKLOG.md`, Kandidat 11: RMSE-Spanne über Prädiktoren teils < 1 %, Devianz
-  > 100 %).
+  > 100 %; bei Tweedie noch drastischer, +0,4 % vs. +15497 % — `full_glm` hatte
+  dort sogar einen SCHLECHTEREN RMSE als der nutzlose Konstant-Prädiktor, RMSE
+  hätte also das bessere Modell verworfen).
+
+**Generalisierte Frage** (Kandidat 11, verallgemeinert über Tweedie hinaus):
+"ist mein Loss überhaupt die richtige Metrik?" ist bei JEDEM schiefen/
+nullmassigen Ziel zu stellen, nicht nur bei Count-/Schadendaten - der Test
+selbst ist einfach (vier naive Prädiktoren wie `near_zero`/`naive_mean`/
+`null_offset`/`full` auf RMSE/MAE UND der eigentlichen Loss-Funktion
+vergleichen; wenn RMSE kaum trennt, aber die Loss-Funktion klar rangiert, ist
+RMSE der falsche Bewertungsmaßstab). Bisher nur an `tweet` bestätigt (1
+Projekt) - kein generischer Code-Helfer, da der Test stark vom jeweiligen
+Loss abhängt; der Denkansatz selbst ist aber uneingeschränkt übertragbar.
 
 Devianz geht auf die GLM-Theorie von **Nelder & Wedderburn (1972)** zurück:
 die (skalierte) Devianz ist −2× die Log-Likelihood-Differenz zwischen dem
@@ -102,11 +114,44 @@ Devianz-Zahl ist nur bei gleichem `p_eval` UND gleicher Ziel-Formulierung
 Beide Objectives nutzen den **log-Link**. Exposure `e` geht als **Offset**
 `log(e)` in den linearen Prädiktor: `mu = e * exp(f(x))`. So modelliert man den
 Erwartungswert *bei gegebener Exposure* (Rate × Exposure), statt Exposure als
-Feature zu missbrauchen. Die konkrete Verdrahtung (nativer mlr3-`offset`-col-role
-für GLM/glmnet, `init_score` für LightGBM) ist noch projekt-lokal — siehe
-`BACKLOG.md`, Kandidat 10.
+Feature zu missbrauchen. Die Verdrahtung ist seit 2026-08-12 ein generischer
+Template-Helfer (`add_log_offset(task, offset_col_name)` in `000_config.R`,
+siehe `BACKLOG.md` Kandidat 10 für Details und die dokumentierte Grenze bei
+LightGBM/CatBoost).
 
-## 7. Literatur
+## 7. Durable Befunde (Kandidat 12, aus mehreren Sessions)
+
+Kleinere, aber wiederholt relevante Lektionen, die keinen eigenen Code
+brauchen, aber leicht vergessen werden:
+
+- **Offset-Wirkung ist modellklassenabhängig, nicht universell.** Ein
+  linearer GLM profitiert klar vom Offset (Poisson: passt exakt zum
+  linearen Prädiktor). Ein flexibler Boost (LightGBM) profitiert bei
+  Poisson kaum messbar (tweet: Δ0,0015 « Fold-SD 0,008) und kann bei
+  Tweedie sogar SCHLECHTER werden (65,7 vs. 61,5, außerhalb der Streuung -
+  Ursache: die multiplikative Rate-Korrektur `mu=Exposure·exp(f(x))`
+  verstärkt Rauschen im niedrigen Exposure-Terzil). **Gegenprobe** (dataCar,
+  2026-08-12): hier half der Offset LightGBM sehr wohl (~5 % Devianz-
+  Verbesserung) - der Nutzen ist also nicht nur modell-, sondern auch
+  DATENSATZABHÄNGIG. Konsequenz: den Offset generisch verfügbar machen und
+  empirisch je Projekt prüfen, nicht pauschal annehmen oder verwerfen.
+- **Referenzmodelle IMMER auf identischen Folds rechnen.** Ein Single-
+  Split-GLM gegen ein 5-fach-CV-LightGBM verglichen drehte einmal das
+  Ergebnis um - der scheinbare Gewinner war nur ein Splitting-Artefakt.
+- **Externer Sanity-Check über D² (skaleninvariant), nicht die absolute
+  Devianz.** Rate+Gewichte-Formulierung und Offset-Formulierung liegen auf
+  verschiedenen Skalen - ein roher Devianz-Vergleich zwischen ihnen ist
+  bedeutungslos, D² (relativ zum Null-Modell) ist es nicht.
+- **Eine aggregierte Metrik-Verbesserung ist nicht automatisch eine
+  Verbesserung für jede Teilfrage** (Ensemble-Selection-Session,
+  2026-08-12, siehe [[project_count_tweedie_deviance]]): ein Ensemble kann
+  die Gesamt-Devianz klar verbessern, obwohl es bei den seltenen,
+  praktisch wichtigen Schadenzeilen sogar konservativer/schlechter ist als
+  ein einfacheres Modell - weil die dominante Nullmasse den Durchschnitt
+  bestimmt. Vor jedem Vertrauen in eine aggregierte Zahl bei einem schiefen
+  Ziel: nach Teilpopulationen (hier y=0 vs. y>0) aufschlüsseln.
+
+## 8. Literatur
 
 - **Tweedie, M. C. K. (1984).** An index which distinguishes between some
   important exponential families. In *Statistics: Applications and New
