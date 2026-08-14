@@ -230,6 +230,14 @@ vorkommt. Zufaellige CV memoriert die Entitaet und **ueberschaetzt massiv**; gro
 - **`diagnose_group_cv(task_grouped, learner, measure)`** - vergleicht random-CV vs
   group-CV und meldet die Luecke. Grosse Luecke => gruppen-sensitiv, random-CV nicht
   vertrauen.
+- **`test_group_significance(target, group, n_perm, seed)`** - Permutationstest:
+  traegt eine VERMUTETE Gruppenspalte echte Struktur (eta^2 weit ausserhalb einer
+  durch Label-Mischen erzeugten Nullverteilung), bevor man `set_group_role()`
+  ueberhaupt einsetzt? Billiger Vortest (nur Varianzzerlegung, kein Modelltraining).
+- **`scan_group_candidates(data, target_col, candidate_cols, ...)`** - wendet den
+  Permutationstest auf mehrere Spalten an, liefert eine nach p-Wert sortierte
+  Kandidatenliste (mit Kardinalitaets-Filter `moegliche_entitaet`). Kein
+  Standard-Pipeline-Schritt - nur bei konkretem Verdacht gezielt aufrufen.
 
 **Beleg (openml-4531 parkinsons-telemonitoring, UPDRS aus Stimme, 42 Patienten):**
 random-CV RMSE 1.97 vs group-CV 14.36 (LightGBM) - random-CV war fast reine Patienten-
@@ -238,6 +246,14 @@ cross-Patienten-Signal), und je flexibler das Modell, desto groesser die Ueber-
 schaetzung. Kernlektion: **die CV-Strategie muss zur Deployment-Frage passen** -
 "bekannte Entitaet monitoren" (random-CV ok) vs. "neue Entitaet vorhersagen"
 (group-CV). Optionaler Baustein, vom Standard-Workflow nicht gesourct.
+
+**Permutationstest an 2 unabhaengigen Projekten bestaetigt** (ADR-003,
+2026-08-14): echte Entitaet (`subject.`/`location_id`) jeweils weit ausserhalb
+der eigenen Nullverteilung (eta^2 0.934/0.193, p=0.001/0.005), Zufallskontrolle
+jeweils im Zentrum ihrer Nullverteilung (p=0.556/0.650). Siehe
+[`REFERENZ_GROUP_AWARE_CV.md`](REFERENZ_GROUP_AWARE_CV.md) fuer Theorie,
+Mechanismus und beide Bestaetigungsfaelle inkl. der dokumentierten Grenzfaelle
+(Confounder/geteilte Zeitachse).
 
 ## Abgrenzung
 
