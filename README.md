@@ -1,52 +1,62 @@
 # AutoML Regression
 
-Wiederverwendbarer `mlr3`-Workflow fuer tabellarische Regressionsaufgaben.
-Das erste Referenzprojekt ist Kaggle Playground Series S5E10: Vorhersage von
-`accident_risk` mit RMSE als Zielmetrik.
+Ein wiederverwendbares `mlr3`-AutoML-Template für tabellarische
+Regressionsaufgaben (R) — Schwesterprojekt zum Klassifikations-Template
+[`AutoML`](https://github.com/kubischraumzentriert/AutoML), gleiche
+Methodik, geteiltes Datenbankschema.
 
-> **Einstieg / Kontext erfassen**: vor dem Deep-Dive in einzelne Skripte
-> zuerst [`WorkflowDescription.md`](WorkflowDescription.md) ansehen - dort
-> steht ein Mermaid-Diagramm mit dem kompletten Ablauf inkl. aller
-> Entscheidungspunkte (Metrik-Typ, Signal-Gate, Adversarial-Shift, Tuning-/
-> Ensemble-Entscheidungen, Neural-Gate) sowie die Bootstrap-Workflow-Liste,
-> das Signal-Gate/Stop-Regel-Detail und die Abgrenzung zum Klassifikations-
-> Template. Gilt auch fuer eine KI-Session, die hier den Kontext erfassen
-> soll: das Diagramm ist der guenstigste Einstiegspunkt. Fuer automatisierte
-> Agenten (Codex, Claude Code, etc.) siehe zusaetzlich
-> [`AGENTS.md`](AGENTS.md) - u.a. die Pflicht, das Diagramm bei Aenderungen
-> an der Ablauflogik mitzuziehen.
+## Warum dieses Template anders ist
 
-## Reproduzierbare Pipeline (`_targets.R`)
+- **Nichts wird ungeprüft übernommen.** Jedes neue Diagnose-Modul (z.B.
+  Conformal-Prediction-Intervalle, Leak-Audit-Guards, Ensemble Selection)
+  muss erst synthetisch auf bekanntem Ground Truth verifiziert und dann an
+  **zwei unabhängigen Projekten** bestätigt werden, bevor es ins Template
+  zurückfließt — festgehalten als Architekturentscheidung ([`adr/003`](adr/003-backport-after-confirmation.md)),
+  nicht nur als Konvention im Kopf.
+- **Negativbefunde werden dokumentiert, nicht versteckt.** Kandidaten, die
+  (noch) keine zweite Bestätigung haben oder sich als Sackgasse erwiesen
+  haben, stehen offen in [`BACKLOG.md`](BACKLOG.md), statt stillschweigend
+  zu verschwinden.
+- **Metrik-Wahl wird selbst hinterfragt.** RMSE ist nicht automatisch die
+  richtige Zielgröße — bei schiefen/nullmassigen Zielen (z.B. Versicherungs-
+  Schadenzahlen) kann sie irreführen (siehe unten).
 
-`tar_make()` fasst den **finalen Produktionspfad** (Volldaten-Task -> finales
-Modell -> Submission, entspricht `150`/`155`) zu einem cachenden
-Abhaengigkeitsgraphen zusammen und ersetzt das manuelle Nacheinander dieser
-Schritte. Aendert sich `train.csv`, die Config oder die in `100_lightgbm_tuning.R`
-getroffene LightGBM-Wahl (`_artifacts/lightgbm_selection.rds`), rechnet
-`tar_make()` nur die betroffenen nachgelagerten Ziele neu. Die explorativen
-Einzel-Experimente (`030`-`125`) bleiben bewusst ausserhalb des Graphen.
+## Ein paar bestätigte Ergebnisse
 
-Entwurfsmuster gespiegelt vom Klassifikations-Template: der Graph deckt nur den
-finalen Pfad ab und hat keinen DB-Seiteneffekt (DB-Logging bleibt in den
-manuellen Skripten). Bewusster Unterschied: die Auswahl wird als **Datei-Eingang**
-(`lightgbm_selection.rds`) gelesen, damit eine neue Tuning-Wahl den Graphen
-korrekt invalidiert - nicht ueber einen DB-Lookup, der fuer einen reproduzier-
-baren Graphen nicht sauber hashbar waere.
+**Die falsche Metrik kann das schlechtere Modell gewinnen lassen.** Bei
+einem Versicherungs-Schadendatensatz mit vielen Nullen (`tweet`, Count-
+Regression) unterschieden sich zwei Modelle in RMSE kaum (+0,4%) — aber in
+der eigentlich passenden Metrik (Poisson-/Tweedie-Devianz) um **+15497%**.
+Das vermeintlich bessere Modell nach RMSE hatte sogar die **schlechtere**
+Devianz. Konsequenz: das Template prüft jetzt aktiv, ob RMSE/MAE für ein
+gegebenes Ziel überhaupt die richtige Metrik ist, statt sie automatisch zu
+verwenden.
 
-Alle Messungen werden in `_artifacts/experiments.db` im gleichen SQLite-Schema
-wie das Klassifikations-Template gespeichert. `merge_project_experiments.R`
-kann projektlokale Datenbanken spaeter in eine zentrale Vergleichsdatenbank
-uebernehmen.
+**Ein Datenleck wurde erst durch systematisches Nachbohren vollständig
+gefunden, nicht beim ersten Blick.** Bei einem Bike-Sharing-Datensatz
+erkannte der automatisierte Guard korrekt, dass die Spalte `registered`
+das Ziel praktisch definiert (RMSE sprang von 3.12 auf 32.50, sobald sie
+entfernt wurde) — übersah aber zunächst eine zweite, kleinere Leck-Quelle
+(`casual`, die zusammen mit `registered` das Ziel zu 100% erklärt). Nach
+Korrektur lag der wirklich ehrliche Wert bei RMSE 40.67 — rund 20% höher,
+als die erste "bereinigte" Zahl vermuten ließ.
 
-Die Tabellen, Beziehungen, Laufzeit-Semantik und Abfrage-Views sind in
-[`DATABASE.md`](DATABASE.md) beschrieben.
-Die neuen Schutzchecks sind in [`WORKFLOW_GUARDS.md`](WORKFLOW_GUARDS.md)
-ausfuehrlicher dokumentiert.
-Fuer neuronale Tabellenmodelle (FT-Transformer) als Ensemble-Diversitaet siehe
-[`NEURAL_DEPLOY.md`](NEURAL_DEPLOY.md): R-only-Policy, wann sich ein neuronales
-Modell lohnt, und der Python-GPU-Export-Workflow fuer Kaggle.
+**Mehrere Modelle klug kombinieren statt nur das beste einzeln zu
+nehmen.** Greedy Ensemble Selection (Caruana et al. 2004, aus dem
+Klassifikations-Template portiert) schlug beim eigenen Referenzprojekt
+sowohl das beste Einzelmodell (RMSE 0.0565) als auch einen einfachen
+gleichgewichteten Blend (RMSE 0.0572): **RMSE 0.0564**.
 
-Die Bootstrap-Workflow-Liste, das Signal-Gate/Stop-Regel-Detail, die
-optionalen Workflow-Sicherungen, das group-aware-Resampling-Modul und die
-Abgrenzung zum Klassifikations-Template stehen jetzt in
-[`WorkflowDescription.md`](WorkflowDescription.md).
+**Unsicherheitsintervalle wurden gegen ihr eigenes mathematisches
+Versprechen geprüft, nicht nur berichtet.** Ein Conformal-Prediction-Modul
+soll garantieren, dass z.B. 90% der echten Werte im vorhergesagten
+Intervall liegen. Gemessen am eigenen Referenzprojekt (51.775 Zeilen):
+empirische Trefferquote **90.1%** bei Zielwert 90.0% — die Garantie hält
+tatsächlich, nicht nur in der Theorie.
+
+## Mehr Tiefe
+
+- [`README_DETAILS.md`](README_DETAILS.md) — Projektidentität und die `targets`-Pipeline im Detail.
+- [`WorkflowDescription.md`](WorkflowDescription.md) — der komplette Ablauf als Mermaid-Diagramm inkl. aller Entscheidungspunkte; auch ohne KI-Unterstützung nachvollziehbar.
+- [`BACKLOG.md`](BACKLOG.md) — Kandidaten ohne zweite Projektbestätigung, vollständige Entscheidungshistorie.
+- [`adr/`](adr/) — Architekturentscheidungen (warum lokale Projekt-DBs statt einer geteilten Live-DB, R-only-Policy, die ≥2-Projekt-Backport-Regel).

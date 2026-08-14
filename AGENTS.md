@@ -61,7 +61,7 @@ einer Entscheidung das ADR in BEIDEN Repos pruefen/aktualisieren, siehe
   routinemaessig das ganze Repo laden.
 - `git status`, `git diff --stat` und gefilterte Ausgaben bevorzugen statt
   vollstaendiger Logs/Diffs.
-- Grosse Dateien (`README.md`, `BACKLOG.md`, `WORKFLOW_GUARDS.md`,
+- Grosse Dateien (`README_DETAILS.md`, `BACKLOG.md`, `WORKFLOW_GUARDS.md`,
   `DATABASE.md`, `DEVIANCE_MEASURES.md`) gezielt ueber Ueberschriften/Suche
   lesen, nicht routinemaessig vollstaendig.
 - Vor mehrminuetigen R-Laeufen (`100_lightgbm_tuning.R` Bayesian
@@ -148,7 +148,8 @@ eine neue Agentensession korrekt und ressourcenschonend einsteigen kann?
 
 - `WorkflowDescription.md` - der Workflow selbst, inkl. Diagramm,
   Bootstrap-Workflow-Liste und Signal-Gate/Stop-Regel.
-- `README.md` - Projektidentitaet und die `targets`-Pipeline.
+- `README.md` - kurzer Ueberblick (Zielgruppe: extern/erster Eindruck).
+- `README_DETAILS.md` - Projektidentitaet und die `targets`-Pipeline im Detail.
 - `WORKFLOW_GUARDS.md` - Guard-Skripte im Detail (Leak-Audit, Feature-
   Availability, Adversarial Validation, Segmentmetriken, Submission-Diff).
 - `BACKLOG.md` - Kandidaten, die noch keine zweite Projekt-Bestaetigung haben.

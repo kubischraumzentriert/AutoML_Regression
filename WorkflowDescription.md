@@ -2,8 +2,8 @@
 
 Diese Datei dokumentiert den *Ablauf* des Regressions-Templates: die
 empfohlene Reihenfolge der Skripte und alle Entscheidungspunkte, die kein
-Skript automatisch trifft. `README.md` dokumentiert Projektidentitaet und
-die `targets`-Pipeline; [`WORKFLOW_GUARDS.md`](WORKFLOW_GUARDS.md)
+Skript automatisch trifft. `README_DETAILS.md` dokumentiert Projektidentitaet
+und die `targets`-Pipeline; [`WORKFLOW_GUARDS.md`](WORKFLOW_GUARDS.md)
 dokumentiert die einzelnen Guard-Skripte (`012`/`013`/`015`/`018`/`125`/
 `158`) ausfuehrlicher; [`BACKLOG.md`](BACKLOG.md),
 [`DATABASE.md`](DATABASE.md), [`DEVIANCE_MEASURES.md`](DEVIANCE_MEASURES.md)
