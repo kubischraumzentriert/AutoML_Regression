@@ -50,6 +50,21 @@ werden (spart Doppelarbeit beim Nachdenken), aber die KONKRETE BESTAETIGUNG
 (Zahlen, Testlauf) muss je Template eigenstaendig erfolgen, bevor eine
 Aenderung dort als "Accepted"/erledigt gilt.
 
+## Erweiterung: gilt auch fuer didaktische Dokumentation (DIDAKTIK_*.md)
+
+Seit 2026-08-14 gilt dieselbe Regel auch fuer Theorie-/Didaktik-Dokumente,
+nicht nur Code. Konvention (etabliert in `ML_Learning\SubjektDatensatz\
+DIDAKTIK_GROUP_CV.md`, einem separaten, rein lokalen Repo ausserhalb der
+beiden Templates - nicht zu verwechseln mit `REFERENZ_*.md` hier im
+Template): pro **neuer Technik/Theorie** (nicht pro Projekt) entsteht im
+jeweiligen `ML_Learning`-Projekt eine eigene `DIDAKTIK_<THEMA>.md` mit
+einem Status-Vermerk ("1 Projekt, noch nicht verallgemeinert"). Erst wenn
+eine zweite, unabhaengige `DIDAKTIK_*.md` auf dieselbe zugrundeliegende
+Theorie trifft, wird die Schnittmenge extrahiert und als
+`REFERENZ_*.md` in das jeweilige Template zurueckgefuehrt - die
+projektgebundenen `DIDAKTIK_*.md`-Dokumente bleiben als konkrete Beispiele
+lokal stehen, werden nicht geloescht.
+
 ## Alternativen erwogen
 
 - **Sofortiges Backporten nach jedem einzelnen Erfolg** - verworfen, hoechstes
