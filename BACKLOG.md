@@ -375,7 +375,7 @@ Count-/Tweedie-Projekt sie bestaetigt.
 
 ## Herkunft: Cross-Template-Port aus dem Klassifikations-Template (2026-08-21)
 
-22. **Korrelierte Feature-Cluster (Schritt 1b) fuer `013_target_leak_audit.R`
+23. **Korrelierte Feature-Cluster (Schritt 1b) fuer `013_target_leak_audit.R`
     - PORTIERT UND VERIFIZIERT.** Anlass (Klassifikations-Seite):
     `lending-club-leak-test` zeigte einen massiven Leak (BAcc 0.9983 voll
     vs. 0.5317 ehrlich), den der Guard komplett uebersah, weil 10
@@ -438,4 +438,4 @@ Count-/Tweedie-Projekt sie bestaetigt.
 | 17 Meta-Learning-Warmstart aus zentraler DB | Standalone (2, siehe Punkt 17) | geprueft, negativ, nicht weiterverfolgt |
 | 18 Successive Halving/Hyperband fuers Tuning | Standalone (2, siehe Punkt 18) | geprueft, negativ, nicht weiterverfolgt |
 | 19 Univariate Drift-Tests (`univariate_drift.R`) | Klassifikation (2) + hier (eigener Regressionstest) | erledigt |
-| 22 Korrelierte Feature-Cluster (Leak-Audit Schritt 1b) | Klassifikation (synthetisch+real) + hier (No-op road-accident-risk) | erledigt |
+| 23 Korrelierte Feature-Cluster (Leak-Audit Schritt 1b) | Klassifikation (synthetisch+real) + hier (No-op road-accident-risk) | erledigt |
