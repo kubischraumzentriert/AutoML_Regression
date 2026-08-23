@@ -57,6 +57,14 @@ feature_cols <- task_full$feature_names
 target_vals <- train[[target_col]]
 target_sd <- sd(target_vals, na.rm = TRUE)
 
+# Fester Holdout-Split (seed-deterministisch), wiederverwendet von Schritt 1b
+# (Cluster-Zerlegung) und Schritt 4 (Ehrlich-vs-aufgeblasen-Zerlegung) - ein
+# einziger gepaarter Split fuer alle Retraining-Vergleiche in diesem Skript.
+holdout <- rsmp("holdout", ratio = validation_ratio)
+holdout$instantiate(task_full)
+train_ids <- holdout$train_set(1)
+test_ids <- holdout$test_set(1)
+
 # --- Schritt 1: Feature-Importance-Konzentration ----------------------------
 cat("=== Schritt 1: Feature-Importance-Konzentration ===\n")
 learner_imp <- lrn("regr.lightgbm", num_iterations = 200)
@@ -125,6 +133,94 @@ if (length(suspects_importance) == 0) {
       "Kumulative Top-%d-Schwelle (%.0f%%) bestaetigt nur die bereits per Einzelschwelle Verdaechtigen - kein Zusatzbefund.\n",
       length(suspects_cumulative), leak_audit_cumulative_share_threshold * 100
     ))
+  }
+}
+
+# --- Schritt 1b: Korrelierte Feature-Cluster (Gruppenverdacht) --------------
+# Aus dem Klassifikations-Template zurueckgefuehrt (2026-08-21, Anlass
+# lending-club-leak-test): ein Leak kann ueber viele MITEINANDER REDUNDANTE
+# Features verteilt sein, bei denen weder die Einzelschwelle noch die
+# kumulative Top-k-Erweiterung oben greifen (die betrachtet nur die
+# FUEHRENDEN Gain-Features - bei Redundanz genuegt deren Entfernen nicht,
+# die uebrigen redundanten Features tragen die Leistung unveraendert
+# weiter). Mechanismus: numerische Features nach paarweiser Korrelation
+# clustern (Redundanz zeigt sich darin, unabhaengig von der individuellen -
+# ggf. irrefuehrenden - Gain-Importance). Nur der Cluster mit der groessten
+# summierten Gain-Importance wird geprueft (hoechstens 1 zusaetzliches
+# Retraining), und nur wenn diese Summe schon die Advisory-Schwelle
+# ueberschreitet (billiger Vorfilter). Verwendet `abs()` auf die
+# Score-Differenz statt einer festen Richtung (RMSE/MAE = niedriger besser,
+# R^2 = hoeher besser) - metrikrichtungs-agnostisch, siehe primary_measure_id.
+cat("\n=== Schritt 1b: Korrelierte Feature-Cluster (Gruppenverdacht) ===\n")
+numeric_cols_all <- feature_cols[vapply(train[, ..feature_cols], is.numeric, logical(1))]
+suspects_cluster <- character(0)
+
+if (length(numeric_cols_all) < 2) {
+  cat("Weniger als 2 numerische Features - Cluster-Check uebersprungen.\n")
+} else {
+  # NA-Ursache: eine Spalte mit (fast) Varianz 0 macht auch ihre eigene
+  # Diagonale NaN (sd=0) - erst auf 0 setzen, DANN die Diagonale wieder auf
+  # 1 erzwingen (Selbstkorrelation ist immer 1, unabhaengig vom NA-Fixup),
+  # sonst wuerde so eine Spalte als maximal UNAEHNLICH zu sich selbst gelten.
+  cor_mat <- suppressWarnings(cor(train[, ..numeric_cols_all], use = "pairwise.complete.obs"))
+  cor_mat[is.na(cor_mat)] <- 0
+  diag(cor_mat) <- 1
+  hc <- hclust(as.dist(1 - abs(cor_mat)), method = "complete")
+  clusters <- cutree(hc, h = 1 - leak_audit_cluster_correlation_threshold)
+  cluster_dt <- data.table(feature = names(clusters), cluster_id = as.integer(clusters))
+  cluster_dt <- merge(cluster_dt, importance_dt[, .(feature, share)], by = "feature", all.x = TRUE)
+  cluster_sizes <- cluster_dt[, .(n = .N, total_share = sum(share, na.rm = TRUE)), by = cluster_id]
+  cluster_sizes <- cluster_sizes[n >= 2]
+
+  if (nrow(cluster_sizes) == 0) {
+    cat(sprintf(
+      "Keine Gruppe von >=2 korrelierten (|r|>=%.2f) Features gefunden.\n",
+      leak_audit_cluster_correlation_threshold
+    ))
+  } else {
+    setorder(cluster_sizes, -total_share)
+    top_cluster_id <- cluster_sizes$cluster_id[1]
+    top_cluster_share <- cluster_sizes$total_share[1]
+    top_cluster_features <- cluster_dt[cluster_id == top_cluster_id, feature]
+    cat(sprintf(
+      "Groesster korrelierter Cluster (|r|>=%.2f): %s (%d Features, zusammen %.1f%% Gain-Importance)\n",
+      leak_audit_cluster_correlation_threshold, paste(top_cluster_features, collapse = ", "),
+      length(top_cluster_features), top_cluster_share * 100
+    ))
+    if (top_cluster_share <= leak_audit_advisory_share_threshold) {
+      cat("Unter der Advisory-Schwelle - keine Zerlegung ausgeloest.\n")
+    } else {
+      cat("Ueber der Advisory-Schwelle - teste per Retraining, ob das Entfernen\n")
+      cat("dieses Clusters den Score veraendert (auch wenn kein Einzelfeature\n")
+      cat("oder die Top-k-Kumulativsumme das anzeigt)...\n")
+      task_cluster_reduced <- task_full$clone(deep = TRUE)
+      task_cluster_reduced$select(setdiff(feature_cols, top_cluster_features))
+      learner_cluster <- lrn("regr.lightgbm", num_iterations = 200)
+      score_variant_cluster <- function(task) {
+        l <- learner_cluster$clone(deep = TRUE)
+        l$train(task, row_ids = train_ids)
+        pred <- l$predict(task, row_ids = test_ids)
+        pred$score(msr(primary_measure_id))
+      }
+      score_full_cluster <- score_variant_cluster(task_full)
+      score_reduced_cluster <- score_variant_cluster(task_cluster_reduced)
+      cluster_effect <- abs(score_full_cluster - score_reduced_cluster)
+      cat(sprintf(
+        "%s: voll=%.4f  ohne Cluster=%.4f  |Differenz|=%.4f\n",
+        primary_measure_id, score_full_cluster, score_reduced_cluster, cluster_effect
+      ))
+      if (cluster_effect > leak_audit_cluster_drop_threshold) {
+        suspects_cluster <- top_cluster_features
+        cat(sprintf(
+          "WARNUNG: Entfernen des korrelierten Clusters (%s) veraendert %s um %.4f -\n",
+          paste(top_cluster_features, collapse = ", "), primary_measure_id, cluster_effect
+        ))
+        cat("  Verdacht auf eine REDUNDANTE Leak-GRUPPE, die die Einzel-/Kumulativschwelle\n")
+        cat("  wegen verteilter Gain-Importance umgeht.\n")
+      } else {
+        cat("Effekt unter der Warnschwelle - vermutlich legitime Korrelation, kein Verdacht.\n")
+      }
+    }
   }
 }
 
@@ -222,18 +318,13 @@ if (length(leak_audit_stratify_cols) == 0 || length(numeric_suspects) == 0) {
 # allen Features, einmal ohne die Verdaechtigen aus Schritt 1+2. Die Differenz
 # quantifiziert, wieviel vom Score "Leak" statt echtes Signal war.
 cat("\n=== Schritt 4: Ehrlich-vs-aufgeblasen-Zerlegung ===\n")
-suspects <- head(Reduce(union, list(suspects_importance, suspects_cumulative, suspects_determinism)), leak_audit_suspect_top_n)
+suspects <- head(Reduce(union, list(suspects_importance, suspects_cumulative, suspects_determinism, suspects_cluster)), leak_audit_suspect_top_n)
 
 if (length(suspects) == 0) {
   cat("Keine verdaechtigen Features aus Schritt 1/2 - Audit unauffaellig,\n")
   cat("Zerlegung uebersprungen.\n")
 } else {
   cat("Verdaechtige Features:", paste(suspects, collapse = ", "), "\n\n")
-
-  holdout <- rsmp("holdout", ratio = validation_ratio)
-  holdout$instantiate(task_full)
-  train_ids <- holdout$train_set(1)
-  test_ids <- holdout$test_set(1)
 
   task_reduced <- task_full$clone(deep = TRUE)
   task_reduced$select(setdiff(feature_cols, suspects))

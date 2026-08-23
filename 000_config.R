@@ -73,6 +73,28 @@ leak_audit_importance_share_threshold <- 0.50  # 1 Feature traegt >50% der Gain-
 # road-accident-risk beobachtet: 3 legitime Top-Features = 88%).
 leak_audit_cumulative_share_threshold <- 0.98
 leak_audit_cumulative_max_k <- 5L
+# Advisory-Schwelle (aus dem Klassifikations-Template zurueckgefuehrt,
+# 2026-08-21): dient hier als billiger Vorfilter fuer Schritt 1b (Cluster-
+# Check) - loest selbst noch keine Warnung/Zerlegung aus, nur ob sich ein
+# zusaetzliches Retraining fuer den staerksten Korrelations-Cluster lohnt.
+leak_audit_advisory_share_threshold <- 0.30
+# Korrelierte Feature-Cluster (Schritt 1b, aus lending-club-leak-test im
+# Klassifikations-Template zurueckgefuehrt): ein Leak kann ueber viele
+# MITEINANDER REDUNDANTE Features verteilt sein, von denen jedes einzeln
+# UND die kumulative Top-k-Summe (oben) unter der Schwelle bleiben, weil
+# Gain-Share bei Redundanz irrefuehrend ist. Numerische Features werden nach
+# Korrelation geclustert; nur der Cluster mit der groessten summierten
+# Gain-Importance wird per Retraining geprueft (hoechstens 1 zusaetzliches
+# Retraining, nur wenn die Summe schon die Advisory-Schwelle ueberschreitet).
+# leak_audit_cluster_drop_threshold bewusst hoch (15 Prozentpunkte/-einheiten
+# der primaeren Metrik) - soll nur bei einem grossen, schwer durch normalen
+# Signalverlust erklaerbaren Effekt greifen. Bekannte Grenze (siehe
+# Klassifikations-Template TARGETS.md): bei EXTREMER (~1.0) Redundanz ueber
+# viele Felder greift der Check nicht zuverlaessig (Kontamination bei
+# niedriger Korrelationsschwelle, Fragmentierung bei hoher) - eine echte,
+# wenn auch unvollstaendige Verbesserung.
+leak_audit_cluster_correlation_threshold <- 0.5
+leak_audit_cluster_drop_threshold <- 0.15
 leak_audit_suspect_top_n <- 8                  # max. Anzahl Verdaechtiger fuer die Zerlegung
 leak_audit_determinism_min_n <- 30             # Mindestgruppengroesse fuer einen Determinismus-Fund
 leak_audit_determinism_sd_ratio <- 0.10        # Gruppen-SD/Gesamt-SD unter dieser Schwelle = verdaechtig

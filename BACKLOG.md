@@ -373,6 +373,48 @@ Count-/Tweedie-Projekt sie bestaetigt.
 
 ---
 
+## Herkunft: Cross-Template-Port aus dem Klassifikations-Template (2026-08-21)
+
+22. **Korrelierte Feature-Cluster (Schritt 1b) fuer `013_target_leak_audit.R`
+    - PORTIERT UND VERIFIZIERT.** Anlass (Klassifikations-Seite):
+    `lending-club-leak-test` zeigte einen massiven Leak (BAcc 0.9983 voll
+    vs. 0.5317 ehrlich), den der Guard komplett uebersah, weil 10
+    Post-Outcome-Felder zusammen nur ~31% Gain-Importance trugen (keins
+    einzeln ueber 30%, die kumulative Top-k-Erweiterung betrachtet nur die
+    FUEHRENDEN Gain-Features und greift bei Redundanz nicht). Neuer
+    Mechanismus: numerische Features nach Korrelation clustern, groessten
+    Cluster (nach summierter Gain-Importance) per Retraining testen, nur
+    bei substanziellem Score-Effekt (`leak_audit_cluster_drop_threshold`,
+    hier metrikrichtungs-agnostisch ueber `abs()` statt BAcc-spezifisch
+    hoeher-ist-besser) als Verdacht flaggen. Kostenkontrolle: hoechstens 1
+    zusaetzliches Retraining, nur bei Vorfilter-Trigger (Cluster-Summe >
+    `leak_audit_advisory_share_threshold`, hier neu eingefuehrt - gab es auf
+    der Regressionsseite bisher nicht).
+
+    **Bekannte Grenze (aus der Klassifikations-Seite mitgebracht)**: der
+    Check loest den Lending-Club-Extremfall selbst NICHT vollstaendig
+    (informatives Signal, aber unter der Warnschwelle - bei extremer
+    Redundanz ueber viele Felder vermischt eine niedrige Korrelations-
+    schwelle legitime Features, eine hohe fragmentiert die Gruppe). Eine
+    getestete Alternative (iterative Einzelfeature-Entfernung) scheiterte
+    noch deutlicher und war viel teurer - nicht portiert. Trotzdem
+    behalten: echte, wenn auch unvollstaendige Verbesserung, bei sauberen
+    Projekten praktisch kostenlos.
+
+    **Regressionsgetestet gegen das Template-eigene Projekt** (`road-
+    accident-risk`, die bekannte 3-legitime-Features-88%-Spezifitaets-
+    kontrolle): Schritt 1/2/4/5 byte-identisch zu den vorherigen Zahlen
+    (curvature 36.4% + lighting 27.0% + speed_limit 25.3% = 88.0%), Schritt
+    1b bleibt korrekt still (kein Cluster mit |r|>=0.5 gefunden) - echter
+    No-op. Positive Bestaetigung stammt vom Klassifikations-Template
+    (synthetisch UND real, siehe dessen TARGETS.md) - kein eigener
+    Regressions-Positivfall gebaut, da der Mechanismus (Korrelations-
+    Clustering + Retraining-Zerlegung) task-typ-unabhaengig ist und die
+    No-op-Regressionstestung hier die verbleibende Restunsicherheit
+    (Uebertragungsfehler beim Portieren) abdeckt.
+
+---
+
 ## Aufnahme-Kriterium erfuellt? → hier abhaken und ins Template verschieben
 
 | Kandidat | 2. Projekt / No-op-Beleg | Status |
@@ -396,3 +438,4 @@ Count-/Tweedie-Projekt sie bestaetigt.
 | 17 Meta-Learning-Warmstart aus zentraler DB | Standalone (2, siehe Punkt 17) | geprueft, negativ, nicht weiterverfolgt |
 | 18 Successive Halving/Hyperband fuers Tuning | Standalone (2, siehe Punkt 18) | geprueft, negativ, nicht weiterverfolgt |
 | 19 Univariate Drift-Tests (`univariate_drift.R`) | Klassifikation (2) + hier (eigener Regressionstest) | erledigt |
+| 22 Korrelierte Feature-Cluster (Leak-Audit Schritt 1b) | Klassifikation (synthetisch+real) + hier (No-op road-accident-risk) | erledigt |
