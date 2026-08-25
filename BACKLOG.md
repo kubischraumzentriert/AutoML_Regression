@@ -415,6 +415,30 @@ Count-/Tweedie-Projekt sie bestaetigt.
 
 ---
 
+## Herkunft: Multi-Layer-Stacking-Test (2026-08-25) - NICHT uebernommen
+
+24. **Mehrschichten-Stacking (AutoGluon-Idee) auf `accident_risk` getestet
+    - NEGATIV, wie auf der Klassifikations-Seite.** `multilayer_stack_test.R`
+    (Root-Skript, baut auf dem bestehenden `127_ensemble_candidate_pool.R`-
+    Pool auf, kein neues Basis-Training): 3-Wege-Split, Layer-1 (glmnet/
+    ranger/lightgbm) lernt aus den rohen Basis-Vorhersagen, Layer-2 (glmnet)
+    lernt NUR aus den Layer-1-Vorhersagen, RMSE minimieren statt BAcc/AUC
+    maximieren. Ergebnis: `greedy_ensemble` 0.05615 < `best_single` 0.05624
+    < `equal_blend` 0.05690 < `multilayer_stack` 0.05693 < `single_layer_
+    stack` 0.05703 - Greedy Ensemble Selection gewinnt klar, beide Stacking-
+    Varianten liegen dahinter. War eine von 4 Projektbestaetigungen fuer
+    dieselbe Frage im Klassifikations-Template (health_condition/s6e6/s6e8 +
+    dieses Projekt, siehe dessen `TARGETS.md` fuer die volle Tabelle/
+    Herleitung) - dieses Projekt lieferte die einzige Regressions-Bestaetigung
+    und bestaetigte dieselbe Richtung wie 3 der 4 Klassifikationslaeufe:
+    Mehrschichten schlaegt einlagiges Stacking (0.05693 < 0.05703), aber
+    beides bleibt hinter dem bestehenden Greedy-Ensemble zurueck. **Nicht ins
+    Template zurueckgefuehrt** - dieselbe Begruendung wie klassifikationsseitig
+    (korrelierte Baumkandidaten limitieren den Nutzen jeder Kombinations-
+    methode). Frage gilt als beantwortet, nicht als "noch offen".
+
+---
+
 ## Aufnahme-Kriterium erfuellt? → hier abhaken und ins Template verschieben
 
 | Kandidat | 2. Projekt / No-op-Beleg | Status |
