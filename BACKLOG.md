@@ -17,35 +17,56 @@ default-inert (kein Eingriff in die bestehende Pipeline).
 
 ---
 
-## Herkunft: Forecasting-/Shift-Projekt (GeoAI Drought, `AStepAheadOfdrought`)
+## Herkunft: Forecasting-/Shift-Projekt (GeoAI Drought, `AStepAheadOfdrought`) - ALLE 5 ERLEDIGT (2026-08-26)
 
-Diese Kandidaten sind forecasting-/panelspezifisch und bisher nur an **einem**
-Projekt belegt. Nicht pauschal fuer i.i.d.-Regression aktivieren.
+1. **Zeitgeblocktes / rollierendes Resampling als zentrale API - ERLEDIGT,
+   2. Bestaetigung (Rossmann Store Sales, 2026-08-26).** `make_resampling()`
+   jetzt in `time_blocked_resampling.R` (Template-Root, opt-in, kein
+   numeriertes Treiber-Skript aendert sich). Rossmann-Befund: zufaellige CV
+   optimistischer als zeitgeblockt (RMSE 0.2545 vs. 0.2696, ~6% relativ) UND
+   instabiler zwischen Folds - siehe `REFERENZ_AVAILABILITY_MASKING.md`
+   Abschnitt 4.
 
-1. **Zeitgeblocktes / rollierendes Resampling als zentrale API.**
-   Statt `rsmp("cv")` fest verdrahtet: `make_resampling(task, purpose)` mit
-   Strategien `cv` / `holdout` / `time_blocked`. OOF-Ensemble und Tuning muessen
-   denselben instanziierten Split nutzen. → Groesster Baustein; braucht ein 2.
-   zeitliches Projekt, bevor die API-Form feststeht.
+2. **Zeitgeblockte Persistence-Baseline - ERLEDIGT, 2. Bestaetigung, ABER mit
+   wichtigem GEGENbefund.** Optionaler Baseline-Typ in `030_baseline.R`
+   (`baseline_persistence_entity_col`/`_date_col`/`_lag`, Default `NULL`,
+   No-op gegen road-accident-risk regressionsgetestet). Rossmann zeigte: die
+   Persistence-Baseline ist NICHT universell besser als der Mittelwert
+   (RMSE 0.4263 vs. 0.4165) - haengt von der Regelmaessigkeit des
+   Zeitmusters ab. Deshalb bewusst als OPTIONALER Zusatzbericht umgesetzt,
+   NICHT als Ersatz/Default fuer die naive-Mean-Baseline. Siehe
+   `REFERENZ_AVAILABILITY_MASKING.md` Abschnitt 5.
 
-2. **Zeitgeblockte Persistence-Baseline.** Bei Forecasting ist die No-Signal-
-   Unterkante oft `y(t+1) = y(t)`, nicht der Mittelwert. Optionaler Baseline-Typ
-   `persistence`, wenn eine Lag-/Current-Target-Spalte konfiguriert ist.
+3. **Oracle- vs. feasible-Baseline trennen - ERLEDIGT, 2. Bestaetigung.**
+   `oracle_feasible_comparison()` in `oracle_feasible_baseline.R`
+   (Template-Root, baut auf `012_feature_availability_audit.R`s
+   `train_only_cols` auf), inkl. Segment-Aufschluesselung. Rossmann-Befund:
+   +55% relative RMSE-Verbesserung durch eine einzige Oracle-Spalte
+   (`Customers`) - modellunabhaengig reproduziert (LightGBM im Prototyp,
+   Ranger im Backport-Funktionstest). Siehe `REFERENZ_AVAILABILITY_
+   MASKING.md` Abschnitt 3.
 
-3. **Oracle- vs. feasible-Baseline trennen.** Eine Baseline, die im Test nicht
-   immer verfuegbare Information nutzt (`oracle`), von einer exakt auf `Test.csv`
-   berechenbaren (`feasible`) unterscheiden; Metriken nach Availability-Segmenten
-   (`all` / `available` / `masked`) gruppieren.
+4. **Validierungs-Maskierung aus Test-Verfuegbarkeit spiegeln - ERLEDIGT,
+   2. Bestaetigung, mit einer wichtigen Methodik-Lehre.** `apply_
+   availability_profile()`/`mask_validation_by_availability_profile()` in
+   `availability_masking.R`. Rossmann-Fund: eine erste Version, die nur
+   ROHE Spalten prueft, uebersah eine echte 5.2%-Luecke in einem daraus
+   ABGELEITETEN Feature - die Backport-Funktion nimmt daher einen expliziten
+   `derived_from`-Parameter, der Rohspalten-Deltas auf abgeleitete Features
+   uebertraegt. Siehe `REFERENZ_AVAILABILITY_MASKING.md` Abschnitt 1-2.
 
-4. **Validierungs-Maskierung aus Test-Verfuegbarkeit spiegeln.** Helper
-   `apply_availability_profile()`: lernt Missingness aus den Test-Features und
-   spiegelt sie in zeitgeblockte Validierungs-Folds, damit die lokale CV nicht
-   zu optimistisch wird.
+5. **Legal-history-Feature-Helper - ERLEDIGT, 2. Bestaetigung.**
+   `months_since_known()`/`weeks_since_known()`/`current_or_last_known()` in
+   `entity_history.R` (Template-Root). Rossmann-Verifikation: korrekter
+   NA->0-Uebergang exakt am Ereignisdatum (Store 5, Wettbewerbseroeffnung
+   2015-04-01), nie ein Blick in die eigene Zukunft der Entity. Siehe
+   `ML_Learning/rossmann-store-sales-forecasting/README.md`.
 
-5. **Legal-history-Feature-Helper.** Generisch "letzter beobachteter Wert vor der
-   aktuellen Zeile je Entity" (`last_known_*`, `months_since_known`,
-   `current_or_last_known`), Maskierung respektierend, aktuelle Zeile nie im
-   Feature. Nur fuer Forecasting/Paneldaten, nicht fuer i.i.d.-Regression.
+   **Neues, eigenstaendiges Referenzdokument**: `REFERENZ_AVAILABILITY_
+   MASKING.md` haelt die Theorie hinter allen 5 Punkten fest (Missingness
+   als eigene Verteilungseigenschaft, Beobachtbarkeits-Shift als
+   Covariate-Shift-Spezialfall) - bisher fehlte diese Erklaerungsebene,
+   `WORKFLOW_GUARDS.md` deckte nur das WAS/WIE ab, nicht das WARUM.
 
 ## Herkunft: Workflow-Konventionen (allgemeiner, aber noch 1x belegt)
 
@@ -443,11 +464,11 @@ Count-/Tweedie-Projekt sie bestaetigt.
 
 | Kandidat | 2. Projekt / No-op-Beleg | Status |
 |---|---|---|
-| 1 zeitgeblocktes Resampling | – | offen |
-| 2 Persistence-Baseline | – | offen |
-| 3 oracle/feasible-Baseline | – | offen |
-| 4 Availability-Spiegelung | – | offen |
-| 5 legal-history-Features | – | offen |
+| 1 zeitgeblocktes Resampling | GeoAI-Drought (1) + Rossmann (1) | erledigt (`time_blocked_resampling.R`) |
+| 2 Persistence-Baseline | GeoAI-Drought (1) + Rossmann (Gegenprobe) | erledigt, opt-in (`030_baseline.R`), kein Default |
+| 3 oracle/feasible-Baseline | GeoAI-Drought (1) + Rossmann (1) | erledigt (`oracle_feasible_baseline.R`) |
+| 4 Availability-Spiegelung | GeoAI-Drought (1) + Rossmann (1) | erledigt (`availability_masking.R`) |
+| 5 legal-history-Features | GeoAI-Drought (1) + Rossmann (1) | erledigt (`entity_history.R`) |
 | 6 benannte Feature-Bloecke | – | offen |
 | 7 Segment-Blends | – | offen |
 | 8 Residualisierung als Option | – | offen |

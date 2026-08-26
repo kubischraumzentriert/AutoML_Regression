@@ -308,6 +308,41 @@ Fuer neue Projekte:
 10. optional `158_check_submission_diff.R`
 11. `160_log_kaggle_submission.R`
 
+## 6. Panel-/Forecasting-Helfer (optional, opt-in, an 2 Projekten bestaetigt)
+
+An GeoAI-Drought (`AStepAheadOfdrought`) UND Rossmann Store Sales bestaetigt
+(siehe `REFERENZ_AVAILABILITY_MASKING.md` fuer Theorie/Zahlen). NUR fuer
+zeitlich/panelartig strukturierte Projekte relevant - keine dieser Dateien
+wird von einem bestehenden numerierten Skript automatisch geladen, ein neues
+Projekt sourct sie bei Bedarf selbst:
+
+- `time_blocked_resampling.R` - `make_resampling(task, purpose, date_col)`:
+  `"time_blocked"` liefert Rolling-Origin-Folds (Trainingsblock strikt vor
+  Validierungsblock) statt zufaelliger CV. Rossmann-Befund: zufaellige CV war
+  optimistischer (RMSE 0.2545 vs. 0.2696, ~6% relativ) UND instabiler
+  zwischen Folds.
+- `oracle_feasible_baseline.R` - `oracle_feasible_comparison(...)`: vergleicht
+  ein Modell MIT und OHNE train-only-Spalten (aus `012`s `train_only_cols`)
+  auf demselben Split, optional nach Segmenten aufgeschluesselt. Rossmann-
+  Befund: +55% relative RMSE-Verbesserung durch eine einzige Oracle-Spalte
+  (`Customers`) - modellunabhaengig reproduziert (LightGBM UND Ranger).
+- `availability_masking.R` - `apply_availability_profile()`/
+  `mask_validation_by_availability_profile()`: spiegelt die aus `012`s
+  Missingness-Delta gemessene Test-Verfuegbarkeitsluecke in die lokale
+  Validierung, INKLUSIVE davon abgeleiteter Features (`derived_from`-
+  Parameter - eine erste Version, die nur Rohspalten prueft, uebersah bei
+  Rossmann eine echte 5.2%-Luecke in einem abgeleiteten Feature).
+- `entity_history.R` - `months_since_known()`/`weeks_since_known()`/
+  `current_or_last_known()`: generische "Zeit seit einem bekannten Ereignis"/
+  "letzter bekannter Wert vor der aktuellen Zeile je Entity"-Helfer.
+  Respektiert IMMER die Zeilen-Zukunft der Entity (kein Blick nach vorn).
+- Optionale Persistence-Baseline in `030_baseline.R`
+  (`baseline_persistence_entity_col`/`_date_col`/`_lag` in `000_config.R`,
+  Default `NULL` -> uebersprungen). **Kein Default-Ersatz fuer den
+  Mittelwert-Vergleich** - Rossmann zeigte einen echten GEGENbefund
+  (Persistence 0.4263 RMSE schlechter als naive_mean 0.4165), immer BEIDE
+  parallel berichten.
+
 ## Nicht automatisieren
 
 Diese Checks liefern Warnsignale, keine automatischen Entscheidungen. Wenn ein

@@ -47,6 +47,28 @@ baseline_results <- timed_benchmark$results[
 fwrite(baseline_results, baseline_results_path)
 saveRDS(timed_benchmark$benchmarks, baseline_benchmark_path)
 
+# Optionale Persistence-Baseline (BACKLOG.md Nr. 2, siehe 000_config.R fuer
+# die Begruendung) - default-inert (NULL -> uebersprungen). Berichtet IMMER
+# neben, nie statt der obigen naiven/Ranger-Baselines.
+if (!is.null(baseline_persistence_entity_col)) {
+  full_dt <- task_train_small$data()
+  setorderv(full_dt, c(baseline_persistence_entity_col, baseline_persistence_date_col))
+  full_dt[, .persistence_pred := shift(get(target_col), baseline_persistence_lag),
+          by = baseline_persistence_entity_col]
+  valid_mask <- !is.na(full_dt$.persistence_pred)
+  persistence_rmse <- sqrt(mean((full_dt$.persistence_pred[valid_mask] - full_dt[[target_col]][valid_mask])^2))
+  naive_mean_rmse <- sqrt(mean((mean(full_dt[[target_col]]) - full_dt[[target_col]][valid_mask])^2))
+  cat(sprintf(
+    "\n=== Persistence-Baseline (Lag=%d, Entity=%s) ===\nnaive_mean: %.4f | persistence: %.4f (n=%d, %.1f%% mit gueltigem Lag)\n",
+    baseline_persistence_lag, baseline_persistence_entity_col, naive_mean_rmse, persistence_rmse,
+    sum(valid_mask), 100 * mean(valid_mask)
+  ))
+  fwrite(
+    data.table(measure = c("naive_mean_rmse", "persistence_rmse"), value = c(naive_mean_rmse, persistence_rmse)),
+    file.path(artifact_dir, "baseline_persistence_results.csv")
+  )
+}
+
 db_con <- db_connect()
 db_proj_id <- db_get_or_create_project(db_con, project_name)
 db_wf_id <- db_get_or_create_workflow(db_con, db_proj_id, "script", "030_baseline.R")

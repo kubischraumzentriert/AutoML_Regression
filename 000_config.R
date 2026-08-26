@@ -23,6 +23,21 @@ full_holdout_train_ratio <- 0.80
 full_holdout_seed <- 2026
 ranger_baseline_trees <- 100
 
+# Persistence-Baseline (030_baseline.R, BACKLOG.md-Kandidat Nr. 2, siehe
+# REFERENZ_AVAILABILITY_MASKING.md Abschnitt 5): optionale zusaetzliche
+# Baseline `y(t) = y(t - baseline_persistence_lag)` je
+# `baseline_persistence_entity_col`, NUR fuer Panel-/Forecasting-Projekte
+# sinnvoll. Default NULL -> Schritt wird uebersprungen, `030_baseline.R`
+# laeuft unveraendert wie bisher (rueckwirkungsfrei fuer dieses und jedes
+# nicht-Forecasting-Projekt). BEWUSST NICHT als generelle Empfehlung/Ersatz
+# fuer den Mittelwert-Vergleich gedacht - die Rossmann-Bestaetigung zeigte
+# einen echten GEGENbefund (Persistence schlechter als der Mittelwert bei
+# unregelmaessigem Zeitmuster), daher immer parallel zu einer Mittelwert-
+# Baseline berichten, nie stattdessen.
+baseline_persistence_entity_col <- NULL
+baseline_persistence_date_col <- NULL
+baseline_persistence_lag <- 7L
+
 task_id_prefix <- paste0(target_col, "_", subset_fraction * 100, "pct")
 
 artifact_dir <- file.path(project_dir, "_artifacts")
