@@ -1,3 +1,9 @@
+---
+title: "AutoML Regression - Workflow-Beschreibung"
+author: "Andre Endress"
+date: "2026-09-10"
+---
+
 # Workflow-Beschreibung: AutoML Regression
 
 Diese Datei dokumentiert den *Ablauf* des Regressions-Templates: die

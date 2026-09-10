@@ -1,3 +1,9 @@
+---
+title: "AutoML Regression Template - Details"
+author: "Andre Endress"
+date: "2026-09-10"
+---
+
 # AutoML Regression
 
 Wiederverwendbarer `mlr3`-Workflow fuer tabellarische Regressionsaufgaben.

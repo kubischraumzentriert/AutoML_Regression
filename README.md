@@ -1,3 +1,9 @@
+---
+title: "AutoML Regression Template"
+author: "Andre Endress"
+date: "2026-09-10"
+---
+
 # AutoML Regression
 
 Ein wiederverwendbares `mlr3`-AutoML-Template für tabellarische
