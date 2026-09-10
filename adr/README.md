@@ -1,10 +1,20 @@
+---
+title: "Architekturentscheidungen (ADRs) - Index"
+status: living
+---
+
 # Architekturentscheidungen (ADRs)
 
 Kurze, nummerierte Datensaetze fuer Entscheidungen, die das Verhalten
 kuenftiger Sessions/Agenten praegen sollen, aber leicht wieder unbeabsichtigt
 rueckgaengig gemacht werden koennten, wenn sie nur als Prosa in README/
 NEURAL_DEPLOY/DATABASE dokumentiert waeren. Bewusst schlank gehalten (kein
-Graph, kein YAML-Header) - passend zur Groesse dieses Repos.
+Graph, keine Tooling-Abhaengigkeit) - passend zur Groesse dieses Repos.
+Seit 2026-09-10 tragen die ADRs einen minimalen YAML-Kopf (`title`, `status`,
+`date`, `adr`, ggf. `amended`) - eine rein maschinenlesbare Doppelung der
+ohnehin im Text stehenden Status-/Datumszeile, damit ein kuenftiges
+Doc-Tooling die ADR-Metadaten lesen kann, ohne die Prosa zu parsen. Kein
+`author` (Git kennt die Autorschaft).
 
 Status-Werte: `Accepted` (gilt), `Proposed` (Vorschlag, noch nicht final),
 `Deprecated` (durch eine neuere ADR ersetzt, hier vermerken warum).

@@ -1,3 +1,10 @@
+---
+title: "002: R-only-Template, Python nur als wegwerfbarer Kaggle-GPU-Export"
+status: Accepted
+date: 2026-08-08
+adr: 2
+---
+
 # 002: R-only-Template, Python nur als wegwerfbarer Kaggle-GPU-Export
 
 Status: Accepted

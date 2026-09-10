@@ -1,3 +1,10 @@
+---
+title: "004: DB-Merge deckt nur aggregierte Tabellen ab, nicht Zeilenebene"
+status: Accepted
+date: 2026-08-08
+adr: 4
+---
+
 # 004: DB-Merge deckt nur aggregierte Tabellen ab, nicht Zeilenebene
 
 Status: Accepted

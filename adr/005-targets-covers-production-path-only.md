@@ -1,3 +1,10 @@
+---
+title: "005: `targets`-Pipeline deckt nur den finalen Produktionspfad ab, nicht die explorativen Skripte"
+status: Accepted
+date: 2026-08-12
+adr: 5
+---
+
 # 005: `targets`-Pipeline deckt nur den finalen Produktionspfad ab, nicht die explorativen Skripte
 
 Status: Accepted

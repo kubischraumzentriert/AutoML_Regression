@@ -1,3 +1,10 @@
+---
+title: "001: Lokale Projekt-DB statt geteilter Live-DB, zentrale Konsolidierung per Merge-Skript"
+status: Accepted
+date: 2026-08-08
+adr: 1
+---
+
 # 001: Lokale Projekt-DB statt geteilter Live-DB, zentrale Konsolidierung per Merge-Skript
 
 Status: Accepted

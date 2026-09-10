@@ -1,3 +1,10 @@
+---
+title: "006: Beide Templates halten ihr `experiments.db`-Schema bewusst identisch"
+status: Accepted
+date: 2026-08-12
+adr: 6
+---
+
 # 006: Beide Templates halten ihr `experiments.db`-Schema bewusst identisch
 
 Status: Accepted
