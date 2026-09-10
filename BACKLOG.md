@@ -484,3 +484,4 @@ Count-/Tweedie-Projekt sie bestaetigt.
 | 18 Successive Halving/Hyperband fuers Tuning | Standalone (2, siehe Punkt 18) | geprueft, negativ, nicht weiterverfolgt |
 | 19 Univariate Drift-Tests (`univariate_drift.R`) | Klassifikation (2) + hier (eigener Regressionstest) | erledigt |
 | 23 Korrelierte Feature-Cluster (Leak-Audit Schritt 1b) | Klassifikation (synthetisch+real) + hier (No-op road-accident-risk) | erledigt |
+| 24 Label-freie CV-LB-Kompositionsdiagnose (`composition_reweighting.R`) | 5 Projekte (Drought/Rossmann/geoai + PumpItUp/Richter als Gegenproben), ADR-003 klar erfuellt | erledigt (2026-09-10, identisch zum Klassifikations-Template, `test_composition_reweighting.R`) |

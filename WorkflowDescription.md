@@ -255,6 +255,38 @@ jeweils im Zentrum ihrer Nullverteilung (p=0.556/0.650). Siehe
 Mechanismus und beide Bestaetigungsfaelle inkl. der dokumentierten Grenzfaelle
 (Confounder/geteilte Zeitachse).
 
+## Optionales Modul: label-freie CV-LB-Kompositionsdiagnose (`composition_reweighting.R`)
+
+Fuer den Fall, dass eine CV-/Holdout-Metrik spuerbar vom echten Leaderboard/Test
+abweicht und man wissen will, **warum** - ohne an Modellen zu drehen und ohne
+Test-Labels. Zwei Funktionen, bewusst billig -> teuer:
+- **`segment_composition_shift(train_values, test_values, tvd_threshold = 0.05)`** -
+  billiger Vorab-Check: unterscheiden sich Train und Test in der Verteilung EINER
+  Segmentspalte (Kategorie, Missingness-/Verfuegbarkeits-Flag, Zeit-seit-Ereignis-
+  Bin, Fensterlaenge, ...) ueberhaupt? Rein aus FEATURES. Meldet die Total-
+  Variation-Distance und ein `auffaellig`-Flag.
+- **`reweight_metric_by_test_composition(segment_metric, test_shares, cv_shares)`** -
+  der teure Schritt: eine bereits NACH SEGMENT stratifizierte CV-/Holdout-Metrik
+  (z.B. aus `125_segment_metrics.R`) wird mit der ECHTEN Test-Segmentverteilung neu
+  gewichtet statt mit der Train-/CV-Verteilung. Die Differenz ist der
+  Kompositionsbeitrag zur CV-LB-Luecke.
+- **`composition_diagnosis_report(...)`** - kombiniert beide zu einem Gesamtbefund;
+  rechnet Stufe 2 nur bei auffaelligem Vorab-Check (oder `force = TRUE`).
+
+**Bestaetigt an 5 Projekten** (ADR-003 klar erfuellt, 2026-09-09): 3 Panel-/
+Zeitreihen-Projekte mit strukturell (nicht zufaellig) getrenntem Train/Test
+zeigten einen ECHTEN, aber unterschiedlich grossen Kompositionsbeitrag
+(`AStepAheadOfdrought` >90% der Luecke, `rossmann-store-sales-forecasting` +1.21%
+RMSE, `geoai-aquaculture` nur ~0.4% - dort dominierte ein Werte-Shift, den die
+Methode korrekt NICHT als Komposition fehlinterpretierte). 2 generische
+IID-Tabellenwettbewerbe (`PumpItUp`, `drivendata_richter`, Zufalls-Split) zeigten
+korrekt KEINEN nennenswerten Kompositionsunterschied - der billige Vorab-Check
+allein reichte. **Anwendungsbedingung**: wertvoll bei strukturell getrenntem
+Train/Test (Forecasting/Panel), nicht bei echtem IID-Split. Optionaler Baustein,
+vom Standard-Workflow nicht gesourct. Backport aus `AStepAheadOfdrought` Phase 9
+(`ML_Learning`, lokal), identisch zum Klassifikations-Template. Verifikation:
+`test_composition_reweighting.R`.
+
 ## Abgrenzung
 
 Klassenspezifische Bausteine wie Stratifizierung, Klassengewichte, ROC/PR,
