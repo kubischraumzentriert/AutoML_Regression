@@ -1,3 +1,9 @@
+---
+title: "AutoML Regression - Devianz-Measures: Theorie, Hintergrund, Literatur"
+author: "Andre Endress"
+date: "2026-09-10"
+---
+
 # Devianz-Measures — Theorie, Hintergrund, Literatur
 
 Begleitdokument zu `deviance_measures.R` (Code) und `WORKFLOW_GUARDS.md` §6

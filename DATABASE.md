@@ -1,3 +1,9 @@
+---
+title: "AutoML Regression - Experiment-Datenbank"
+author: "Andre Endress"
+date: "2026-09-10"
+---
+
 # Experiment Database
 
 `_artifacts/experiments.db` ist die projektlokale SQLite-Datenbank fuer

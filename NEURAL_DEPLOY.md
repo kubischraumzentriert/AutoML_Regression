@@ -1,3 +1,9 @@
+---
+title: "AutoML Regression - Neuronale Modelle: R-Entwicklung, Python-GPU-Export"
+author: "Andre Endress"
+date: "2026-09-10"
+---
+
 # Neuronale Modelle: R-Entwicklung, Python-GPU-Export
 
 Policy fuer neuronale Tabellen-Modelle (v. a. FT-Transformer) als Ensemble-
