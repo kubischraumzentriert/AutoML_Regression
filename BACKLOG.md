@@ -469,10 +469,10 @@ Count-/Tweedie-Projekt sie bestaetigt.
 | 3 oracle/feasible-Baseline | GeoAI-Drought (1) + Rossmann (1) | erledigt (`oracle_feasible_baseline.R`) |
 | 4 Availability-Spiegelung | GeoAI-Drought (1) + Rossmann (1) | erledigt (`availability_masking.R`) |
 | 5 legal-history-Features | GeoAI-Drought (1) + Rossmann (1) | erledigt (`entity_history.R`) |
-| 6 benannte Feature-Bloecke | – | offen |
-| 7 Segment-Blends | – | offen |
-| 8 Residualisierung als Option | – | offen |
-| 9 Segmentbelegung-Check | – | offen |
+| 6 benannte Feature-Bloecke | `beijing-air-quality-panel` (1, `028_feature_blocks.R`, 24h-Horizont) | in Arbeit |
+| 7 Segment-Blends | `beijing-air-quality-panel` (1, geplant) | in Arbeit |
+| 8 Residualisierung als Option | `beijing-air-quality-panel` (1, geplant) | in Arbeit |
+| 9 Segmentbelegung-Check | `beijing-air-quality-panel` (1, geplant) | in Arbeit |
 | 10 Exposure-Offset-Verdrahtung | tweet (1) + dataCar (1) | erledigt (Backport in `000_config.R`/`020_task.R`) |
 | 11 Metrik-Angemessenheits-A/B | tweet (1) | erledigt (Doku, kein Code geplant) |
 | 12 Durable Befunde (Doku) | tweet (1) + dataCar (Gegenprobe) | erledigt |
@@ -485,3 +485,4 @@ Count-/Tweedie-Projekt sie bestaetigt.
 | 19 Univariate Drift-Tests (`univariate_drift.R`) | Klassifikation (2) + hier (eigener Regressionstest) | erledigt |
 | 23 Korrelierte Feature-Cluster (Leak-Audit Schritt 1b) | Klassifikation (synthetisch+real) + hier (No-op road-accident-risk) | erledigt |
 | 24 Label-freie CV-LB-Kompositionsdiagnose (`composition_reweighting.R`) | 5 Projekte (Drought/Rossmann/geoai + PumpItUp/Richter als Gegenproben), ADR-003 klar erfuellt | erledigt (2026-09-10, identisch zum Klassifikations-Template, `test_composition_reweighting.R`) |
+| 25 `add_regular_lags()` - regelmaessige hochfrequente Lag-/Rolling-Features je Entity | `beijing-air-quality-panel` (1) - `025_forecast_features.R` baut sie dort direkt per `data.table::shift`/`frollmean` | offen - `entity_history.R` deckt nur "Zeit seit Ereignis" + Lag-1 ab; generischer Helfer `add_regular_lags(dt, entity, time, value, lags, roll_windows)` neben den Ereignis-Helfern waere sinnvoll, braucht 2. Panel-Projekt |

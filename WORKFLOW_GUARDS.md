@@ -342,6 +342,51 @@ Projekt sourct sie bei Bedarf selbst:
   Mittelwert-Vergleich** - Rossmann zeigte einen echten GEGENbefund
   (Persistence 0.4263 RMSE schlechter als naive_mean 0.4165), immer BEIDE
   parallel berichten.
+- **Regelmaessige hochfrequente Lags deckt `entity_history.R` NICHT ab**
+  (nur "Zeit seit Ereignis" + Lag-1 via `current_or_last_known()`). Fuer
+  stuendliche/taegliche Panel-Lags + Rolling-Fenster direkt
+  `data.table::shift(value, h)` je Entity und
+  `frollmean(shift(value, 1L), k)` fuer das Vergangenheits-Fenster (das
+  `shift(1)` haelt die aktuelle Periode raus). Rolling-SD vektorisiert
+  ueber `sqrt(pmax(0, E[x^2] - E[x]^2))` statt `frollapply(..., sd)`
+  (bei >100k Zeilen sonst zu langsam). Siehe `BACKLOG.md`-Kandidat
+  "add_regular_lags()".
+
+## 8. Fallstricke beim Uebertragen des Templates auf ein neues Projekt
+
+Nicht projekt-, sondern template-spezifisch - jedes neue Projekt kann
+darauf stossen:
+
+- **`030_baseline.R` bricht beim ERSTEN Lauf ab**, wenn
+  `_artifacts/task_train_small.rds` noch nicht existiert:
+  `030_baseline.R` sourct `040_preprocessing.R` (definiert
+  `make_imputed_learner()`), laedt dann bei fehlendem Task-Artefakt
+  `source("020_task.R")` nach - und `020_task.R` beginnt mit `rm(list =
+  ls())`, was `make_imputed_learner()` wieder loescht. **Workaround**:
+  `020_task.R` immer zuerst separat laufen lassen (so auch in Abschnitt 5
+  / `WorkflowDescription.md` als Reihenfolge vorgesehen). Haertungs-
+  kandidat: `020_task.R` ohne `rm(list = ls())`, oder `030` sourct `040`
+  NACH dem Task-Build.
+
+- **mlr3 "Learner ... received task with different column info (feature
+  type or factor level ordering) during train and predict"** bei ZWEI
+  separat gebauten Tasks (einer aus `train.csv`, einer aus `test.csv`):
+  `fread` inferiert Spaltentypen je Datei unabhaengig (dieselbe Spalte
+  wird `numeric` im Train, `integer` im Test, wenn die Testscheibe nur
+  ganze Zahlen enthaelt - `012_feature_availability_audit.R` zeigt diese
+  Typ-Deltas), und Faktor-Level-Mengen/-Reihenfolgen koennen abweichen.
+  **Fix**: EINEN gemeinsamen Task aus `rbind(train, test)` bauen (mit
+  `.is_test`-Flag), numerische Spalten explizit `as.numeric`, Charakter
+  explizit `as.factor`, dann per `row_ids` trennen:
+  `learner$train(task_all, row_ids = train_rows)` /
+  `learner$predict(task_all, row_ids = test_rows)`. Nie zwei Tasks. (Das
+  umgeht auch mlr3s Task-Hash-Check, wenn man eine EINMAL instanziierte
+  Resampling-Struktur ueber feature-gefilterte Task-Klone
+  wiederverwenden will - dann pro Fold `train_set(i)`/`test_set(i)`
+  ziehen und manuell schleifen.)
+
+- **`mlr3measures::rsq()` ist deprecated** - R^2 manuell:
+  `1 - sum((truth - response)^2) / sum((truth - mean(truth))^2)`.
 
 ## Nicht automatisieren
 
