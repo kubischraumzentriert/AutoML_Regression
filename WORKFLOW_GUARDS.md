@@ -356,17 +356,29 @@ Projekt sourct sie bei Bedarf selbst:
   Zeitachse je Entity voraus (kein Reindizieren bei Zeitluecken).
 - **Residualisierung (Ziel = Rohwert minus einer groben Gruppen-
   Klimatologie, z.B. `entity x Monat x Stunde`-Mittel) ist KEIN
-  Default-Hebel** - an 2 unabhaengigen Panel-Projekten bestaetigt
-  NEGATIV (GeoAI-Drought: "nicht stabil besser"; `beijing-air-quality-
-  panel`: klar schlechter, +7,45 RMSE im Mittel, alle 5 zeitgeblockten
-  Folds gleiches Vorzeichen, Ratio 2,59 - Delta-je-Fold weit ueber dem
-  Fold-Rauschen). Plausibler Grund: ein Boosting-Modell lernt eine
-  gruppenabhaengige Baseline ohnehin selbst (Baumsplits auf den
-  Gruppierungs-Features) UND kann dabei flexibel mit anderen Features
-  interagieren - der additive Klimatologie-Abzug nimmt genau diese
-  Interaktionsfreiheit und fuegt bei kleinen Gruppen zusaetzliches
-  Rauschen ein. Ein Residual-Modell IMMER gegen das direkte Modell mit
-  identischen Features/Folds messen, nie ungeprueft einbauen.
+  Default-Hebel** - an 3 unabhaengigen Panel-Projekten geprueft, KEIN
+  Fall zeigt einen verlaesslichen Vorteil (GeoAI-Drought: "nicht stabil
+  besser"; `beijing-air-quality-panel`: Ratio 1,04, Held-out-Test sogar
+  minimal BESSER mit Residualisierung, -0,36 RMSE; `electricity-load-
+  panel`: im Mittel schlechter, aber Ratio 0,86 - ein einzelner Fold-
+  Ausreisser dominiert die Streuung). **Korrektur 2026-09-11**: die
+  urspruenglich hier dokumentierte "klar schlechter, Ratio 2,59"-Zahl
+  fuer Beijing beruhte auf einem Bug (`merge()` ohne `sort = FALSE` beim
+  Zusammenfuehren der Klimatologie-Werte mit den Fold-Zeilen - Default
+  `sort = TRUE` sortiert nach den Merge-Spalten um, der danach extrahierte
+  `clim`-Vektor war dadurch GEGEN `truth`/`pred` verschoben; betraf sogar
+  das Residual-TRAININGSZIEL selbst, nicht nur die Auswertung). Nach dem
+  Fix: kein Fall zeigt einen |Ratio|>2-Effekt in beide Richtungen -
+  **Residualisierung hilft nachweislich nicht verlaesslich, ist aber
+  auch nicht zuverlaessig schaedlich** (anders als vorher dokumentiert).
+  Plausibler Grund fuer den ausbleibenden Nutzen bleibt: ein Boosting-
+  Modell lernt eine gruppenabhaengige Baseline ohnehin selbst
+  (Baumsplits auf den Gruppierungs-Features). Praktische Konsequenz
+  unveraendert: ein Residual-Modell IMMER gegen das direkte Modell mit
+  identischen Features/Folds messen, nie ungeprueft einbauen - UND bei
+  jedem `merge()`, der einen Vektor fuer eine spaetere positionelle
+  Verrechnung extrahiert, `sort = FALSE` nicht vergessen (sonst gilt
+  dieselbe Falle wie hier).
 
 ## 8. Fallstricke beim Uebertragen des Templates auf ein neues Projekt
 
@@ -413,6 +425,21 @@ darauf stossen:
 
 - **`mlr3measures::rsq()` ist deprecated** - R^2 manuell:
   `1 - sum((truth - response)^2) / sum((truth - mean(truth))^2)`.
+
+- **`data.table::merge()` sortiert standardmaessig (`sort = TRUE`) nach
+  den Merge-Spalten um** - wird nur EIN Ergebnisvektor extrahiert
+  (`merge(x, y, by = ...)$spalte`) und dieser dann POSITIONELL gegen
+  einen anders geordneten Vektor verrechnet (z.B. `truth - clim_vektor`),
+  entsteht eine stille Verschiebung - kein Fehler, nur falsche Werte.
+  Gefunden in `beijing-air-quality-panel/031_residualization.R`: die
+  Klimatologie-Werte wurden gegen Fold-Zeilen verrechnet, OHNE
+  `sort = FALSE` - verfaelschte sogar das Residual-Trainingsziel selbst
+  und liess ein eigentlich neutrales Ergebnis (Ratio 1,04) wie einen
+  klaren Negativbefund (Ratio 2,59) aussehen (siehe Panel-Helfer-
+  Abschnitt oben, Residualisierung). **Fix**: `sort = FALSE` setzen, oder
+  gleich die GESAMTE Tabelle (inkl. der Vergleichsspalten wie `truth`)
+  mergen statt nur einen Wert zu extrahieren - dann bleibt die
+  Zuordnung immer konsistent, unabhaengig von der Merge-Reihenfolge.
 
 ## Nicht automatisieren
 

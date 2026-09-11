@@ -569,7 +569,7 @@ Count-/Tweedie-Projekt sie bestaetigt.
 | 5 legal-history-Features | GeoAI-Drought (1) + Rossmann (1) | erledigt (`entity_history.R`) |
 | 6 benannte Feature-Bloecke | `beijing-air-quality-panel` (1, `028_feature_blocks.R`, 24h-Horizont) | erledigt (Disziplin bestaetigt, kein Modul - siehe unten) |
 | 7 Segment-Blends | `beijing-air-quality-panel` (1, `029_segment_blend.R`) | erledigt (Negativergebnis dokumentiert - siehe unten) |
-| 8 Residualisierung als Option | GeoAI-Drought (1, "nicht stabil besser") + `beijing-air-quality-panel` (1, `031_residualization.R`, Ratio 2,59) | erledigt, ADR-003 erfuellt (2 Projekte, Negativergebnis) - als Warnhinweis in `WORKFLOW_GUARDS.md` #7 zurueckgefuehrt |
+| 8 Residualisierung als Option | GeoAI-Drought (1, "nicht stabil besser") + `beijing-air-quality-panel` (1, Ratio 1,04 nach Bugfix) + `electricity-load-panel` (1, Ratio 0,86) | erledigt (2026-09-11 korrigiert) - urspruenglich als "klar schlechter, Ratio 2,59" dokumentiert, beruhte auf einem `merge()`-`sort=FALSE`-Bug (siehe `WORKFLOW_GUARDS.md` #8); nach Fix an KEINEM der 3 Projekte ein verlaesslicher Effekt in beide Richtungen - Kernaussage bleibt "kein Default-Hebel, immer messen", nur die "klar schlechter"-Formulierung war falsch |
 | 9 Segmentbelegung-Check | `beijing-air-quality-panel` (1, `032_composition_diagnosis.R`) | erledigt - siehe unten, nutzt bereits vorhandenes `composition_reweighting.R` |
 | 10 Exposure-Offset-Verdrahtung | tweet (1) + dataCar (1) | erledigt (Backport in `000_config.R`/`020_task.R`) |
 | 11 Metrik-Angemessenheits-A/B | tweet (1) | erledigt (Doku, kein Code geplant) |
