@@ -460,6 +460,37 @@ Count-/Tweedie-Projekt sie bestaetigt.
 
 ---
 
+## Herkunft: Beijing-Air-Quality-Panel-Projekt (2026-09-11)
+
+25. **Kandidat 6 (benannte Domain-Feature-Bloecke, Refit auf denselben
+    Folds) - Disziplin am 2. Panel-Projekt bestaetigt, kein Modul-Backport
+    noetig.** `beijing-air-quality-panel/028_feature_blocks.R`: 6 benannte
+    Bloecke (`station`/`calendar`/`meteo`/`lag`/`rolling`/gelaggter
+    Schadstoff-Block), kumulativ hinzugefuegt UND leave-one-block-out, beides
+    auf DENSELBEN einmal instanziierten zeitgeblockten Folds (manuelle
+    Fold-Schleife statt `resample()`, umgeht mlr3s Task-Hash-Check bei
+    feature-gefilterten Klonen). Paarweiser Delta je Fold, `|Mittel/SD| >
+    ~2` als Schwelle fuer "Effekt klar ueber dem Fold-Rauschen".
+
+    Ergebnis: nur der Meteorologie-Block hat einen klaren Effekt (Ratio
+    -3,37, RMSE 91,7 -> 61,2). Der Lag-Block ist GRENZWERTIG (Ratio -1,51,
+    unter der Schwelle). Rolling-Features und der gelaggte Schadstoff-Block
+    sind praktisch wirkungslos (Ratios nahe 0). **Das bestaetigt genau den
+    Kandidat-6-Mechanismus**: ein naiver Vergleich gegen Zahlen aus getrennt
+    gesplitteten Laeufen haette den grenzwertigen Lag-Effekt leicht als
+    "eindeutig" und den Rolling-/Schadstoff-Nulleffekt leicht als kleinen
+    echten Gewinn fehlinterpretiert - beides waere gewoehnliches
+    Fold-Rauschen gewesen. Der paarweise Vergleich auf identischen Folds
+    macht den Unterschied sichtbar.
+
+    Kandidat 6 beschreibt eine METHODIK (Disziplin), kein Template-Modul -
+    "erledigt" heisst hier: die Methodik hat sich an einem zweiten,
+    unabhaengigen Panel-Projekt (nach GeoAI-Drought) bewaehrt, nicht dass
+    Code zurueckgefuehrt wurde. Volle Zahlen/Tabelle:
+    `ML_Learning/beijing-air-quality-panel/README.md` Abschnitt "Kandidat 6".
+
+---
+
 ## Aufnahme-Kriterium erfuellt? → hier abhaken und ins Template verschieben
 
 | Kandidat | 2. Projekt / No-op-Beleg | Status |
@@ -469,7 +500,7 @@ Count-/Tweedie-Projekt sie bestaetigt.
 | 3 oracle/feasible-Baseline | GeoAI-Drought (1) + Rossmann (1) | erledigt (`oracle_feasible_baseline.R`) |
 | 4 Availability-Spiegelung | GeoAI-Drought (1) + Rossmann (1) | erledigt (`availability_masking.R`) |
 | 5 legal-history-Features | GeoAI-Drought (1) + Rossmann (1) | erledigt (`entity_history.R`) |
-| 6 benannte Feature-Bloecke | `beijing-air-quality-panel` (1, `028_feature_blocks.R`, 24h-Horizont) | in Arbeit |
+| 6 benannte Feature-Bloecke | `beijing-air-quality-panel` (1, `028_feature_blocks.R`, 24h-Horizont) | erledigt (Disziplin bestaetigt, kein Modul - siehe unten) |
 | 7 Segment-Blends | `beijing-air-quality-panel` (1, geplant) | in Arbeit |
 | 8 Residualisierung als Option | `beijing-air-quality-panel` (1, geplant) | in Arbeit |
 | 9 Segmentbelegung-Check | `beijing-air-quality-panel` (1, geplant) | in Arbeit |
