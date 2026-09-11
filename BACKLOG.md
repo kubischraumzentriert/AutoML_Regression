@@ -531,6 +531,31 @@ Count-/Tweedie-Projekt sie bestaetigt.
     Default) damit bestaetigt. Volle Zahlen:
     `ML_Learning/beijing-air-quality-panel/README.md` Abschnitt "Kandidat 8".
 
+28. **Kandidat 9 (Segmentbelegungs-Check + Kompositionsdiagnose) - erledigt,
+    nutzt das bereits bestehende `composition_reweighting.R`.**
+    `032_composition_diagnosis.R`: (A) Segmentbelegungs-Check bestaetigt,
+    dass das Kandidat-7-Zielsegment (`month == 12`) im echten Test 8852
+    Zeilen (17,3 %) hat - kein verdeckter No-op wie bei Drought Phase 8.
+    (B) `segment_composition_shift()` + `reweight_metric_by_test_
+    composition()` auf die zeitgeblockte-CV-vs.-Test-Luecke angewendet:
+    Total-Variation-Distance der Monatsverteilung CV-Testfolds vs. echter
+    Test = 0,469 (deutlich auffaellig - CV-Folds streuen ueber alle 12
+    Monate, der echte Test ist ausschliesslich Sept-Feb). Die
+    test-komponierte Schaetzung (65,94) erklaert **126 %** der CV-Test-
+    Luecke (CV-Praxis 56,09 -> echter Test 63,88) - die Luecke ist
+    vollstaendig ein Kompositionseffekt, kein zusaetzlicher Werte-Shift.
+
+    Kein neuer Backport noetig - das Modul existiert bereits (Kandidat 15
+    der urspruenglichen 5-Projekt-Bestaetigung). Dieser Fund ist eine
+    weitere, sechste Anwendung/Bestaetigung. Volle Zahlen:
+    `ML_Learning/beijing-air-quality-panel/README.md` Abschnitt "Kandidat 9".
+
+    **Damit sind alle 4 urspruenglich offenen Kandidaten (6-9) aus dem
+    Beijing-Projekt abgearbeitet**: 1 Backport (8, Warnhinweis in
+    `WORKFLOW_GUARDS.md`), 2 dokumentierte Negativergebnisse ohne
+    Backport-Bedarf (7, und Kandidat 6 als bestaetigte Methodik-Disziplin),
+    1 erfolgreiche Anwendung eines bereits bestehenden Moduls (9).
+
 ---
 
 ## Aufnahme-Kriterium erfuellt? → hier abhaken und ins Template verschieben
@@ -545,7 +570,7 @@ Count-/Tweedie-Projekt sie bestaetigt.
 | 6 benannte Feature-Bloecke | `beijing-air-quality-panel` (1, `028_feature_blocks.R`, 24h-Horizont) | erledigt (Disziplin bestaetigt, kein Modul - siehe unten) |
 | 7 Segment-Blends | `beijing-air-quality-panel` (1, `029_segment_blend.R`) | erledigt (Negativergebnis dokumentiert - siehe unten) |
 | 8 Residualisierung als Option | GeoAI-Drought (1, "nicht stabil besser") + `beijing-air-quality-panel` (1, `031_residualization.R`, Ratio 2,59) | erledigt, ADR-003 erfuellt (2 Projekte, Negativergebnis) - als Warnhinweis in `WORKFLOW_GUARDS.md` #7 zurueckgefuehrt |
-| 9 Segmentbelegung-Check | `beijing-air-quality-panel` (1, geplant) | in Arbeit |
+| 9 Segmentbelegung-Check | `beijing-air-quality-panel` (1, `032_composition_diagnosis.R`) | erledigt - siehe unten, nutzt bereits vorhandenes `composition_reweighting.R` |
 | 10 Exposure-Offset-Verdrahtung | tweet (1) + dataCar (1) | erledigt (Backport in `000_config.R`/`020_task.R`) |
 | 11 Metrik-Angemessenheits-A/B | tweet (1) | erledigt (Doku, kein Code geplant) |
 | 12 Durable Befunde (Doku) | tweet (1) + dataCar (Gegenprobe) | erledigt |
