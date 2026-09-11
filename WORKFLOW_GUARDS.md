@@ -398,6 +398,16 @@ darauf stossen:
   wiederverwenden will - dann pro Fold `train_set(i)`/`test_set(i)`
   ziehen und manuell schleifen.)
 
+  **Diese Falle ist trotz Dokumentation mehrfach wieder aufgetreten**
+  (Beijing-Air-Quality-Panel: `026`, `029`, je einmal trotz bekannter
+  Falle) - Lehre: dokumentiertes Wissen verhindert das Hineinlaufen nicht
+  zuverlaessig, nur ein wiederverwendbarer Code-Baustein tut das. Deshalb
+  gibt es jetzt [`combined_task_helper.R`](combined_task_helper.R)
+  (`build_combined_task_regr(train, test, feature_cols, target_col)`) -
+  kapselt genau dieses Muster und gibt `task`/`train_rows`/`test_rows`/
+  `train_task` zurueck. Neue Panel-/Forecasting-Projekte sollten diesen
+  Helfer verwenden statt das Muster erneut von Hand zu schreiben.
+
 - **`mlr3measures::rsq()` ist deprecated** - R^2 manuell:
   `1 - sum((truth - response)^2) / sum((truth - mean(truth))^2)`.
 
