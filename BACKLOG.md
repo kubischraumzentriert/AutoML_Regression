@@ -489,6 +489,27 @@ Count-/Tweedie-Projekt sie bestaetigt.
     Code zurueckgefuehrt wurde. Volle Zahlen/Tabelle:
     `ML_Learning/beijing-air-quality-panel/README.md` Abschnitt "Kandidat 6".
 
+26. **Kandidat 7 (Segment-Blends vor Modellvielfalt) - NEGATIVERGEBNIS am
+    Beijing-Projekt.** `029_segment_blend.R`: Segmentdiagnose per OOF ueber
+    dieselben zeitgeblockten Folds (Klimatologie `station x month x hour`
+    NUR aus den Fold-Trainingsdaten) findet `month == 12` (Dezember) klar
+    als schwaechstes Segment (OOF-RMSE 88,08 vs. global 58,83). Ein
+    Blend-Gewicht-Grid (Modell vs. Klimatologie, nur auf dem Segment) zeigt
+    aber: RMSE steigt MONOTON mit dem Klimatologie-Gewicht - bestes Gewicht
+    ist w=0, die Klimatologie hilft nie, nicht einmal in kleiner Dosis.
+    Subsegment-Check (Station x Dezember) dadurch trivial (`delta=0`
+    ueberall). Bestaetigung auf dem Held-out-Test rechnerisch ein No-op
+    (w=0), explizit ausgewiesen statt nur behauptet.
+
+    Grund (plausibel): die station-monatliche Klimatologie ist zu grob fuer
+    Dezember (mischt milde und extreme Heizsaison-/Inversions-Episoden ueber
+    alle Jahre) - das Modell (mit `lag_24h` + Meteorologie) ist bereits
+    naeher an der aktuellen Situation als ein grober historischer
+    Durchschnitt. **Kein Backport** - Negativergebnis analog zu Rossmanns
+    Persistence-Gegenbefund (Kandidat 2), dokumentiert statt verworfen.
+    Volle Zahlen: `ML_Learning/beijing-air-quality-panel/README.md`
+    Abschnitt "Kandidat 7".
+
 ---
 
 ## Aufnahme-Kriterium erfuellt? → hier abhaken und ins Template verschieben
@@ -501,7 +522,7 @@ Count-/Tweedie-Projekt sie bestaetigt.
 | 4 Availability-Spiegelung | GeoAI-Drought (1) + Rossmann (1) | erledigt (`availability_masking.R`) |
 | 5 legal-history-Features | GeoAI-Drought (1) + Rossmann (1) | erledigt (`entity_history.R`) |
 | 6 benannte Feature-Bloecke | `beijing-air-quality-panel` (1, `028_feature_blocks.R`, 24h-Horizont) | erledigt (Disziplin bestaetigt, kein Modul - siehe unten) |
-| 7 Segment-Blends | `beijing-air-quality-panel` (1, geplant) | in Arbeit |
+| 7 Segment-Blends | `beijing-air-quality-panel` (1, `029_segment_blend.R`) | erledigt (Negativergebnis dokumentiert - siehe unten) |
 | 8 Residualisierung als Option | `beijing-air-quality-panel` (1, geplant) | in Arbeit |
 | 9 Segmentbelegung-Check | `beijing-air-quality-panel` (1, geplant) | in Arbeit |
 | 10 Exposure-Offset-Verdrahtung | tweet (1) + dataCar (1) | erledigt (Backport in `000_config.R`/`020_task.R`) |
