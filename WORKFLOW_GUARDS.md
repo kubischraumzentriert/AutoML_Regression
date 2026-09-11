@@ -343,14 +343,17 @@ Projekt sourct sie bei Bedarf selbst:
   (Persistence 0.4263 RMSE schlechter als naive_mean 0.4165), immer BEIDE
   parallel berichten.
 - **Regelmaessige hochfrequente Lags deckt `entity_history.R` NICHT ab**
-  (nur "Zeit seit Ereignis" + Lag-1 via `current_or_last_known()`). Fuer
-  stuendliche/taegliche Panel-Lags + Rolling-Fenster direkt
-  `data.table::shift(value, h)` je Entity und
-  `frollmean(shift(value, 1L), k)` fuer das Vergangenheits-Fenster (das
-  `shift(1)` haelt die aktuelle Periode raus). Rolling-SD vektorisiert
-  ueber `sqrt(pmax(0, E[x^2] - E[x]^2))` statt `frollapply(..., sd)`
-  (bei >100k Zeilen sonst zu langsam). Siehe `BACKLOG.md`-Kandidat
-  "add_regular_lags()".
+  (nur "Zeit seit Ereignis" + Lag-1 via `current_or_last_known()`). Dafuer
+  [`regular_lags_helper.R`](regular_lags_helper.R) -
+  `add_regular_lags(dt, entity, time, value, lags, roll_windows)`: baut
+  `<value>_lag_<n>` (zeilenbasiert je Entity) und `<value>_roll_mean_
+  <name>`/`<value>_roll_sd_<name>` (Rolling-Fenster `c(from, width)`
+  Schritte zurueck, leckagefrei per Konstruktion). Rolling-SD vektorisiert
+  ueber `sqrt(pmax(0, E[x^2] - E[x]^2))` statt `frollapply(..., sd)` (bei
+  >100k Zeilen sonst zu langsam). An 2 unabhaengigen Panel-Projekten
+  bestaetigt (`beijing-air-quality-panel`, `electricity-load-panel`,
+  ADR-003 erfuellt, BACKLOG.md-Kandidat 25) - setzt eine REGELMAESSIGE
+  Zeitachse je Entity voraus (kein Reindizieren bei Zeitluecken).
 - **Residualisierung (Ziel = Rohwert minus einer groben Gruppen-
   Klimatologie, z.B. `entity x Monat x Stunde`-Mittel) ist KEIN
   Default-Hebel** - an 2 unabhaengigen Panel-Projekten bestaetigt
