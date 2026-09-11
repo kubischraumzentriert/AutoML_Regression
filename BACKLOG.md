@@ -544,7 +544,7 @@ Count-/Tweedie-Projekt sie bestaetigt.
 | 5 legal-history-Features | GeoAI-Drought (1) + Rossmann (1) | erledigt (`entity_history.R`) |
 | 6 benannte Feature-Bloecke | `beijing-air-quality-panel` (1, `028_feature_blocks.R`, 24h-Horizont) | erledigt (Disziplin bestaetigt, kein Modul - siehe unten) |
 | 7 Segment-Blends | `beijing-air-quality-panel` (1, `029_segment_blend.R`) | erledigt (Negativergebnis dokumentiert - siehe unten) |
-| 8 Residualisierung als Option | `beijing-air-quality-panel` (1, `031_residualization.R`) | erledigt (klares Negativergebnis - siehe unten) |
+| 8 Residualisierung als Option | GeoAI-Drought (1, "nicht stabil besser") + `beijing-air-quality-panel` (1, `031_residualization.R`, Ratio 2,59) | erledigt, ADR-003 erfuellt (2 Projekte, Negativergebnis) - als Warnhinweis in `WORKFLOW_GUARDS.md` #7 zurueckgefuehrt |
 | 9 Segmentbelegung-Check | `beijing-air-quality-panel` (1, geplant) | in Arbeit |
 | 10 Exposure-Offset-Verdrahtung | tweet (1) + dataCar (1) | erledigt (Backport in `000_config.R`/`020_task.R`) |
 | 11 Metrik-Angemessenheits-A/B | tweet (1) | erledigt (Doku, kein Code geplant) |

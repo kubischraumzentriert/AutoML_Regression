@@ -351,6 +351,19 @@ Projekt sourct sie bei Bedarf selbst:
   ueber `sqrt(pmax(0, E[x^2] - E[x]^2))` statt `frollapply(..., sd)`
   (bei >100k Zeilen sonst zu langsam). Siehe `BACKLOG.md`-Kandidat
   "add_regular_lags()".
+- **Residualisierung (Ziel = Rohwert minus einer groben Gruppen-
+  Klimatologie, z.B. `entity x Monat x Stunde`-Mittel) ist KEIN
+  Default-Hebel** - an 2 unabhaengigen Panel-Projekten bestaetigt
+  NEGATIV (GeoAI-Drought: "nicht stabil besser"; `beijing-air-quality-
+  panel`: klar schlechter, +7,45 RMSE im Mittel, alle 5 zeitgeblockten
+  Folds gleiches Vorzeichen, Ratio 2,59 - Delta-je-Fold weit ueber dem
+  Fold-Rauschen). Plausibler Grund: ein Boosting-Modell lernt eine
+  gruppenabhaengige Baseline ohnehin selbst (Baumsplits auf den
+  Gruppierungs-Features) UND kann dabei flexibel mit anderen Features
+  interagieren - der additive Klimatologie-Abzug nimmt genau diese
+  Interaktionsfreiheit und fuegt bei kleinen Gruppen zusaetzliches
+  Rauschen ein. Ein Residual-Modell IMMER gegen das direkte Modell mit
+  identischen Features/Folds messen, nie ungeprueft einbauen.
 
 ## 8. Fallstricke beim Uebertragen des Templates auf ein neues Projekt
 
