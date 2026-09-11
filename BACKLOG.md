@@ -510,6 +510,27 @@ Count-/Tweedie-Projekt sie bestaetigt.
     Volle Zahlen: `ML_Learning/beijing-air-quality-panel/README.md`
     Abschnitt "Kandidat 7".
 
+27. **Kandidat 8 (Residualisierung nur als Hypothese) - KLARES
+    NEGATIVERGEBNIS am Beijing-Projekt.** `031_residualization.R`: direktes
+    Modell (`pm25` als Ziel) vs. Residual-Modell (`pm25 - clim(station,
+    month, hour)` als Ziel, Klimatologie zurueckaddiert), identisches
+    Featureset, identische 5 zeitgeblockte Folds, paarweiser Delta je Fold.
+    Residualisierung ist in ALLEN 5 Folds schlechter (Mittel +7,45 RMSE, SD
+    2,88, Ratio **2,59** - klar ueber der |2|-Schwelle, gleiches Vorzeichen
+    durchgehend). Held-out-Test bestaetigt dieselbe Richtung (+2,45 RMSE).
+
+    Plausible Erklaerung: LightGBM lernt eine station-/monats-/
+    stundenabhaengige Baseline bereits selbst (Baumsplits auf diesen
+    kategorialen Features) UND kann dabei flexibel mit anderen Features
+    (v.a. Lags) interagieren - eine vorab abgezogene, additive, aus groben
+    Gruppenmitteln bestehende Klimatologie nimmt genau diese Interaktions-
+    freiheit und fuegt Rauschen ein (kleine Gruppen). Konsistent mit
+    Kandidat 7 (dieselbe Klimatologie half dort auch nicht als Blend).
+    **Kein Backport** - Negativergebnis dokumentiert, Kandidat-8-Disziplin
+    (immer gegen das direkte Modell auf identischen Folds messen, nie als
+    Default) damit bestaetigt. Volle Zahlen:
+    `ML_Learning/beijing-air-quality-panel/README.md` Abschnitt "Kandidat 8".
+
 ---
 
 ## Aufnahme-Kriterium erfuellt? → hier abhaken und ins Template verschieben
@@ -523,7 +544,7 @@ Count-/Tweedie-Projekt sie bestaetigt.
 | 5 legal-history-Features | GeoAI-Drought (1) + Rossmann (1) | erledigt (`entity_history.R`) |
 | 6 benannte Feature-Bloecke | `beijing-air-quality-panel` (1, `028_feature_blocks.R`, 24h-Horizont) | erledigt (Disziplin bestaetigt, kein Modul - siehe unten) |
 | 7 Segment-Blends | `beijing-air-quality-panel` (1, `029_segment_blend.R`) | erledigt (Negativergebnis dokumentiert - siehe unten) |
-| 8 Residualisierung als Option | `beijing-air-quality-panel` (1, geplant) | in Arbeit |
+| 8 Residualisierung als Option | `beijing-air-quality-panel` (1, `031_residualization.R`) | erledigt (klares Negativergebnis - siehe unten) |
 | 9 Segmentbelegung-Check | `beijing-air-quality-panel` (1, geplant) | in Arbeit |
 | 10 Exposure-Offset-Verdrahtung | tweet (1) + dataCar (1) | erledigt (Backport in `000_config.R`/`020_task.R`) |
 | 11 Metrik-Angemessenheits-A/B | tweet (1) | erledigt (Doku, kein Code geplant) |
