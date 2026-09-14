@@ -72,5 +72,40 @@ dt6 <- data.table::data.table(a = rnorm(50), y = rnorm(50))
 res6 <- missingness_mechanism_report(dt6, target_col = "y")
 check("Report ohne Missingness: 0 Zeilen", nrow(res6) == 0L)
 
+# --- min_effect_size unterdrueckt einen signifikanten, winzigen Effekt ---
+set.seed(6)
+n7 <- 200000
+y7 <- rnorm(n7)
+dt7 <- data.table::data.table(x_other = rnorm(n7), y = y7, z = rnorm(n7))
+miss_idx7 <- unique(c(sample(seq_len(n7), 20000), order(y7, decreasing = TRUE)[1:500]))
+dt7[miss_idx7, z := NA]
+r7_no <- diagnose_missingness_mechanism(dt7, feature = "z", target_col = "y")
+r7_thr <- diagnose_missingness_mechanism(dt7, feature = "z", target_col = "y", min_effect_size = 0.1)
+check("grosses n: signifikant trotz winzigem Effekt", r7_no$target_p_adj < 0.05)
+check("grosses n: Effektgroesse < 0.1", r7_no$target_effect_value < 0.1)
+check("mit Schwelle: Verdict 'kein Hinweis'", grepl("kein Hinweis", r7_thr$verdict))
+
+# --- min_effect_size laesst einen ECHTEN grossen Effekt weiterhin durch --
+set.seed(7)
+n8 <- 5000
+y8 <- rnorm(n8)
+dt8 <- data.table::data.table(x_other = rnorm(n8), y = y8, z = rnorm(n8))
+miss_idx8 <- order(y8, decreasing = TRUE)[1:1250]
+dt8[miss_idx8, z := NA]
+r8 <- diagnose_missingness_mechanism(dt8, feature = "z", target_col = "y", min_effect_size = 0.1)
+check("echter Effekt >= 0.1 bleibt trotz Schwelle erhalten", r8$target_effect_value >= 0.1)
+check("echter Effekt: Verdict 'Ziel-Hinweis'", grepl("Ziel-Hinweis", r8$verdict))
+
+# --- target_effect_value ist numerisch, nicht String -------------------
+set.seed(8)
+n9 <- 500
+y9 <- rnorm(n9)
+dt9 <- data.table::data.table(x_other = rnorm(n9), y = y9, z = rnorm(n9))
+miss_idx9 <- order(y9, decreasing = TRUE)[1:125]
+dt9[miss_idx9, z := NA]
+r9 <- diagnose_missingness_mechanism(dt9, feature = "z", target_col = "y")
+check("target_effect_value ist numerisch in [0,1]",
+      is.numeric(r9$target_effect_value) && r9$target_effect_value >= 0 && r9$target_effect_value <= 1)
+
 cat(sprintf("\n%s\n", if (ok) "Alle Checks OK." else "MINDESTENS EIN CHECK FEHLGESCHLAGEN."))
 if (!ok) quit(status = 1)
