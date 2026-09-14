@@ -441,6 +441,24 @@ darauf stossen:
   mergen statt nur einen Wert zu extrahieren - dann bleibt die
   Zuordnung immer konsistent, unabhaengig von der Merge-Reihenfolge.
 
+- **LightGBM `objective="huber"`/`"quantile"` mit Default-`alpha`
+  (0.9) UND einem auf L2 kalibrierten Iterationsbudget kann einen
+  robusten Loss faelschlich "katastrophal schlecht" aussehen lassen.**
+  Gefunden in `electricity-load-panel/034_robust_loss_functions.R`
+  (BACKLOG.md Kandidat 30): bei einem Ziel mit Werten bis in die
+  Tausende ist `alpha=0.9` praktisch IMMER unterschritten - Huber wird
+  zu fast reinem linearem Loss mit KONSTANTEM (nicht fehlerproportionalem)
+  Gradienten, das Modell braucht dadurch vielfach mehr Baeume, um
+  grosse Fehler zu korrigieren, als L2s fehlerproportionaler Gradient
+  (RMSE bei 250 Iterationen: 1738 statt 96 [!]; bei 3000 Iterationen:
+  96, praktisch identisch - reine Konvergenzgeschwindigkeit, kein
+  echter Qualitaetsunterschied). **Fix**: `alpha` auf die tatsaechliche
+  Fehlergroessenordnung skalieren (z.B. aus einer schnellen L2-Referenz-
+  RMSE ableiten, nicht den Default uebernehmen) UND alle Objectives mit
+  demselben, ausreichend GROSSEN Iterationsbudget vergleichen - sonst
+  ist der Vergleich nicht aussagekraeftig, egal in welche Richtung er
+  ausfaellt.
+
 ## Nicht automatisieren
 
 Diese Checks liefern Warnsignale, keine automatischen Entscheidungen. Wenn ein
