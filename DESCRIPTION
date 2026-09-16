@@ -1,10 +1,14 @@
 Package: MLR3Regression
 Title: mlr3 Regression AutoML Template (CI Dependency Manifest)
 Version: 0.0.0.9000
-Description: Kein echtes R-Paket - diese Datei existiert ausschliesslich,
-    damit r-lib/actions/setup-r-dependencies (siehe .github/workflows/
-    ci-tests.yml) mlr3extralearners ueber das mlr-org R-Universe aufloesen
-    kann (nicht auf CRAN, siehe Additional_repositories unten).
+Description: Kein echtes R-Paket - diese Datei existiert ausschliesslich
+    als CI-Dependency-Manifest fuer r-lib/actions/setup-r-dependencies
+    (siehe .github/workflows/ci-tests.yml). mlr3extralearners liegt nicht
+    auf CRAN, nur im mlr-org R-Universe - das eigentlich zustaendige
+    Additional_repositories-Feld wird von pak NICHT automatisch gelesen
+    (bestaetigt per fehlgeschlagenem CI-Lauf); die tatsaechliche
+    Aufloesung passiert ueber .Rprofile (options(repos=...)), analog zum
+    bereits geloesten, identischen Fund in MLR3_Classifikation/.Rprofile.
 License: MIT
 Imports:
     data.table,
@@ -12,5 +16,4 @@ Imports:
     mlr3learners,
     mlr3extralearners,
     mlr3pipelines
-Additional_repositories: https://mlr-org.r-universe.dev
 Encoding: UTF-8

@@ -12,9 +12,9 @@ name: CI Tests
 on:
   push:
     branches: [main]
-    paths: ["**.R", "DESCRIPTION", ".github/workflows/ci-tests.yml"]
+    paths: ["**.R", "DESCRIPTION", ".Rprofile", ".github/workflows/ci-tests.yml"]
   pull_request:
-    paths: ["**.R", "DESCRIPTION", ".github/workflows/ci-tests.yml"]
+    paths: ["**.R", "DESCRIPTION", ".Rprofile", ".github/workflows/ci-tests.yml"]
 
 jobs:
   unit-tests:
