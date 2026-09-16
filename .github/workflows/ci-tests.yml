@@ -37,7 +37,7 @@ jobs:
           # Installation von wenigen Minuten auf 20+ min/Timeout-Risiko
           # aufgeblaeht haetten (erster CI-Lauf mit "all" nach 10+ min
           # noch immer nicht fertig, abgebrochen).
-          dependencies: '"Depends", "Imports", "LinkingTo"'
+          dependencies: 'c("Depends", "Imports", "LinkingTo")'
           extra-packages: any::data.table, any::mlr3, any::mlr3learners, any::mlr3extralearners, any::mlr3pipelines
 
       - name: Alle test_*.R ausfuehren
