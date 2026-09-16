@@ -29,6 +29,15 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           cache-version: 1
+          # Nur Hard-Dependencies (Depends/Imports/LinkingTo), NICHT "all"
+          # (Action-Default) - mlr3extralearners' Suggests-Liste deckt
+          # dutzende optionale Lerner-Backends ab (catboost, xgboost,
+          # keras, ...), die test_*.R gar nicht braucht (nur `library(
+          # mlr3extralearners)`, kein konkreter Extra-Lerner) und die
+          # Installation von wenigen Minuten auf 20+ min/Timeout-Risiko
+          # aufgeblaeht haetten (erster CI-Lauf mit "all" nach 10+ min
+          # noch immer nicht fertig, abgebrochen).
+          dependencies: '"Depends", "Imports", "LinkingTo"'
           extra-packages: any::data.table, any::mlr3, any::mlr3learners, any::mlr3extralearners, any::mlr3pipelines
 
       - name: Alle test_*.R ausfuehren
