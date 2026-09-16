@@ -6,10 +6,15 @@ date: "2026-09-10"
 
 # AutoML Regression
 
+[![CI Tests](https://github.com/kubischraumzentriert/AutoML_Regression/actions/workflows/ci-tests.yml/badge.svg)](https://github.com/kubischraumzentriert/AutoML_Regression/actions/workflows/ci-tests.yml)
+
 Ein wiederverwendbares `mlr3`-AutoML-Template für tabellarische
 Regressionsaufgaben (R) — Schwesterprojekt zum Klassifikations-Template
 [`AutoML`](https://github.com/kubischraumzentriert/AutoML), gleiche
 Methodik, geteiltes Datenbankschema.
+
+Testsuite lokal ausführen: `Rscript run_all_tests.R` (führt alle
+`test_*.R`-Dateien aus, dieselbe Suite wie in CI, siehe Badge oben).
 
 ## Warum dieses Template anders ist
 

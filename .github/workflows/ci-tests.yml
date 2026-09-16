@@ -1,0 +1,35 @@
+name: CI Tests
+
+# Fuehrt alle test_*.R-Dateien (siehe run_all_tests.R) bei jedem Push/PR
+# aus - echte Korrektheitstests fuer die Helper-Module (combined_task_
+# helper, composition_reweighting, deviance, feature_importance_
+# stability, missingness_mechanism_audit, paired_fold_comparison,
+# quantile_regression, regular_lags_helper, rolling_drift_diagnosis).
+# Analog zur unit-tests-CI im Schwesterprojekt MLR3_Classifikation
+# (ci-smoke-test.yml), aber ohne eigenen Smoke-Test-Job - dafuer fehlt
+# hier noch eine synthetische Fixture (separater, groesserer Schritt).
+
+on:
+  push:
+    branches: [main]
+    paths: ["**.R", ".github/workflows/ci-tests.yml"]
+  pull_request:
+    paths: ["**.R", ".github/workflows/ci-tests.yml"]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache-version: 1
+          extra-packages: any::data.table, any::mlr3, any::mlr3learners, any::mlr3extralearners, any::mlr3pipelines
+
+      - name: Alle test_*.R ausfuehren
+        run: Rscript run_all_tests.R
