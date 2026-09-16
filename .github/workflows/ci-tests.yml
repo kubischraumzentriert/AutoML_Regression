@@ -38,7 +38,7 @@ jobs:
           # aufgeblaeht haetten (erster CI-Lauf mit "all" nach 10+ min
           # noch immer nicht fertig, abgebrochen).
           dependencies: 'c("Depends", "Imports", "LinkingTo")'
-          extra-packages: any::data.table, any::mlr3, any::mlr3learners, any::mlr3extralearners, any::mlr3pipelines
+          extra-packages: any::data.table, any::mlr3, any::mlr3learners, any::mlr3extralearners, any::mlr3pipelines, any::lightgbm, any::ranger
 
       - name: Alle test_*.R ausfuehren
         run: Rscript run_all_tests.R
