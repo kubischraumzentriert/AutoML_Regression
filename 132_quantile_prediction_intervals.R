@@ -9,7 +9,7 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "040_preprocessing.R"))
-source(file.path(project_dir, "quantile_regression.R"))
+source(file.path(project_dir, "modules", "quantile_regression.R"))
 
 # Quantilregression als Alternative/Ergaenzung zu 128_conformal_prediction_
 # intervals.R (siehe quantile_regression.R fuer Methodik). Nutzt DIESELBE

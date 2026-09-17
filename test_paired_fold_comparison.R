@@ -10,7 +10,7 @@ suppressPackageStartupMessages({
   library(mlr3learners)
 })
 project_dir <- normalizePath(".")
-source(file.path(project_dir, "paired_fold_comparison.R"))
+source(file.path(project_dir, "modules", "paired_fold_comparison.R"))
 
 ok <- TRUE
 check <- function(name, cond) {

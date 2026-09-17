@@ -11,7 +11,7 @@ suppressPackageStartupMessages({
   library(mlr3)
 })
 project_dir <- normalizePath(".")
-source(file.path(project_dir, "combined_task_helper.R"))
+source(file.path(project_dir, "modules", "combined_task_helper.R"))
 
 ok <- TRUE
 check <- function(name, cond) {

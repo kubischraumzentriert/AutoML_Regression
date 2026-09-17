@@ -344,7 +344,7 @@ Projekt sourct sie bei Bedarf selbst:
   parallel berichten.
 - **Regelmaessige hochfrequente Lags deckt `entity_history.R` NICHT ab**
   (nur "Zeit seit Ereignis" + Lag-1 via `current_or_last_known()`). Dafuer
-  [`regular_lags_helper.R`](regular_lags_helper.R) -
+  [`regular_lags_helper.R`](modules/regular_lags_helper.R) -
   `add_regular_lags(dt, entity, time, value, lags, roll_windows)`: baut
   `<value>_lag_<n>` (zeilenbasiert je Entity) und `<value>_roll_mean_
   <name>`/`<value>_roll_sd_<name>` (Rolling-Fenster `c(from, width)`
@@ -417,7 +417,7 @@ darauf stossen:
   (Beijing-Air-Quality-Panel: `026`, `029`, je einmal trotz bekannter
   Falle) - Lehre: dokumentiertes Wissen verhindert das Hineinlaufen nicht
   zuverlaessig, nur ein wiederverwendbarer Code-Baustein tut das. Deshalb
-  gibt es jetzt [`combined_task_helper.R`](combined_task_helper.R)
+  gibt es jetzt [`combined_task_helper.R`](modules/combined_task_helper.R)
   (`build_combined_task_regr(train, test, feature_cols, target_col)`) -
   kapselt genau dieses Muster und gibt `task`/`train_rows`/`test_rows`/
   `train_task` zurueck. Neue Panel-/Forecasting-Projekte sollten diesen

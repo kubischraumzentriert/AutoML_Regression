@@ -11,7 +11,7 @@
 # "nachrechnen" statt vertrauen.
 rm(list = ls())
 project_dir <- normalizePath(".")
-source(file.path(project_dir, "deviance_measures.R"))
+source(file.path(project_dir, "modules", "deviance_measures.R"))
 
 ok <- TRUE
 check <- function(name, a, b, tol = 1e-6) {

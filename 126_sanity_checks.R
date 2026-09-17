@@ -3,7 +3,7 @@ rm(list = ls())
 suppressPackageStartupMessages(library(data.table))
 
 source("000_config.R")
-source(file.path(project_dir, "sanity_checks.R"))
+source(file.path(project_dir, "modules", "sanity_checks.R"))
 
 # Modell-Sanity-Checks (Perturbation/Invarianz/Directional Expectation nach
 # Huyen 2022 Kap. 6) - siehe REFERENZ_MODEL_SANITY_CHECKS.md im

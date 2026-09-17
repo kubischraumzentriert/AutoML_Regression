@@ -16,8 +16,8 @@ suppressPackageStartupMessages({
 })
 project_dir <- normalizePath(".")
 source(file.path(project_dir, "040_preprocessing.R"))
-source(file.path(project_dir, "conformal_prediction.R"))
-source(file.path(project_dir, "quantile_regression.R"))
+source(file.path(project_dir, "modules", "conformal_prediction.R"))
+source(file.path(project_dir, "modules", "quantile_regression.R"))
 
 ok <- TRUE
 check <- function(name, cond) {

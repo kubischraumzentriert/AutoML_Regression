@@ -7,8 +7,8 @@
 # =====================================================================
 rm(list = ls())
 project_dir <- normalizePath(".")
-source(file.path(project_dir, "univariate_drift.R"))
-source(file.path(project_dir, "rolling_drift_diagnosis.R"))
+source(file.path(project_dir, "modules", "univariate_drift.R"))
+source(file.path(project_dir, "modules", "rolling_drift_diagnosis.R"))
 
 ok <- TRUE
 check <- function(name, cond) {

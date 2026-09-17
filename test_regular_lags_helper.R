@@ -7,7 +7,7 @@
 rm(list = ls())
 suppressPackageStartupMessages(library(data.table))
 project_dir <- normalizePath(".")
-source(file.path(project_dir, "regular_lags_helper.R"))
+source(file.path(project_dir, "modules", "regular_lags_helper.R"))
 
 ok <- TRUE
 check <- function(name, cond) {

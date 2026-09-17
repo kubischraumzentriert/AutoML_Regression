@@ -12,7 +12,7 @@ suppressPackageStartupMessages({
   library(mlr3learners)
 })
 project_dir <- normalizePath(".")
-source(file.path(project_dir, "feature_importance_stability.R"))
+source(file.path(project_dir, "modules", "feature_importance_stability.R"))
 
 ok <- TRUE
 check <- function(name, cond) {

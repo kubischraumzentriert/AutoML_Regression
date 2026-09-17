@@ -9,7 +9,7 @@
 # =====================================================================
 rm(list = ls())
 project_dir <- normalizePath(".")
-source(file.path(project_dir, "composition_reweighting.R"))
+source(file.path(project_dir, "modules", "composition_reweighting.R"))
 
 ok <- TRUE
 check <- function(name, cond) {

@@ -3,7 +3,7 @@ rm(list = ls())
 suppressPackageStartupMessages(library(data.table))
 
 source("000_config.R")
-source(file.path(project_dir, "conformal_prediction.R"))
+source(file.path(project_dir, "modules", "conformal_prediction.R"))
 
 # Split-Conformal Prediction Intervals (siehe conformal_prediction.R fuer
 # Methodik/Referenzen). Baut auf dem `120_full_holdout_confirmation.R`-
