@@ -35,7 +35,7 @@ suppressPackageStartupMessages({
 #' @param truth numerischer Vektor, y >= 0 (Counts).
 #' @param response numerischer Vektor, mu > 0 (vorhergesagte Erwartungswerte).
 poisson_deviance <- function(truth, response, eps = 1e-10) {
-  stopifnot(length(truth) == length(response))
+  stopifnot("truth und response muessen gleich lang sein" = length(truth) == length(response))
   if (any(truth < 0)) stop("poisson_deviance: truth muss >= 0 sein.")
   mu <- pmax(response, eps)
   # y*log(y/mu) mit der Konvention 0*log0 = 0
@@ -48,7 +48,7 @@ poisson_deviance <- function(truth, response, eps = 1e-10) {
 #' @param power Tweedie-Potenz p. p=1 -> Poisson, 1<p<2 -> Compound
 #'   Poisson-Gamma, p=2 -> Gamma, p=0 -> Normal/L2.
 tweedie_deviance <- function(truth, response, power = 1.5, eps = 1e-10) {
-  stopifnot(length(truth) == length(response))
+  stopifnot("truth und response muessen gleich lang sein" = length(truth) == length(response))
   p <- power
   if (any(truth < 0)) stop("tweedie_deviance: truth muss >= 0 sein.")
   mu <- pmax(response, eps)

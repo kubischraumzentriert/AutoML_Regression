@@ -31,7 +31,7 @@
 #'   (z.B. `make_resampling(task, "time_blocked", ...)`).
 #' @return Liste (eine je Fold) mit `train`/`test` Row-Id-Vektoren.
 extract_folds <- function(resampling) {
-  stopifnot(resampling$is_instantiated)
+  stopifnot("resampling muss bereits instanziiert sein ($instantiate())" = resampling$is_instantiated)
   lapply(seq_len(resampling$iters), function(i)
     list(train = resampling$train_set(i), test = resampling$test_set(i)))
 }
@@ -63,7 +63,7 @@ run_variant_on_folds <- function(folds, variant_fn) {
 #'   eine Verschlechterung. `|ratio| > ~2` gilt als klar ueber dem
 #'   Fold-zu-Fold-Rauschen (siehe `BACKLOG.md`-Disziplin Kandidat 6).
 paired_fold_delta <- function(baseline, variant, metrics = NULL, label = "variant") {
-  stopifnot(nrow(baseline) == nrow(variant))
+  stopifnot("baseline und variant muessen auf denselben Folds (gleiche Zeilenanzahl) beruhen" = nrow(baseline) == nrow(variant))
   if (is.null(metrics)) metrics <- intersect(colnames(baseline), colnames(variant))
   data.table::rbindlist(lapply(metrics, function(m) {
     d <- variant[, m] - baseline[, m]

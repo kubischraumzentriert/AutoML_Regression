@@ -163,7 +163,7 @@ reweight_metric_by_test_composition <- function(segment_metric, test_shares, cv_
 .as_named_share_vector <- function(x) {
   if (is.data.frame(x) || data.table::is.data.table(x)) {
     x <- data.table::as.data.table(x)
-    stopifnot(all(c("segment", "share") %in% names(x)))
+    stopifnot("share-Argument als data.frame/data.table braucht die Spalten 'segment' und 'share'" = all(c("segment", "share") %in% names(x)))
     return(setNames(as.numeric(x$share), as.character(x$segment)))
   }
   stopifnot("share-Argument braucht Namen (Segmentwerte)" = !is.null(names(x)))

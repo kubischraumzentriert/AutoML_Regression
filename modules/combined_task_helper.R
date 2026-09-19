@@ -37,8 +37,11 @@ suppressPackageStartupMessages(library(data.table))
 #'   Task gebaut wird - das ist der eigentliche Fix, nicht nur das `rbind`.
 build_combined_task_regr <- function(train, test, feature_cols, target_col,
                                       id = "combined") {
-  stopifnot(all(feature_cols %in% names(train)), all(feature_cols %in% names(test)))
-  stopifnot(target_col %in% names(train))
+  stopifnot(
+    "feature_cols muessen alle in train vorhanden sein" = all(feature_cols %in% names(train)),
+    "feature_cols muessen alle in test vorhanden sein" = all(feature_cols %in% names(test))
+  )
+  stopifnot("target_col muss in train vorhanden sein" = target_col %in% names(train))
 
   cols <- c(feature_cols, target_col)
   tr <- copy(as.data.table(train))[, ..cols]

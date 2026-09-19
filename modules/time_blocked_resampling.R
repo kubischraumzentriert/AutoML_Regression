@@ -41,9 +41,9 @@ make_resampling <- function(task, purpose = c("cv", "holdout", "time_blocked"),
   if (purpose != "time_blocked") {
     return(mlr3::rsmp(purpose))
   }
-  stopifnot(!is.null(date_col))
+  stopifnot("date_col muss gesetzt sein fuer purpose='time_blocked'" = !is.null(date_col))
   dates <- if (!is.null(dt)) dt[[date_col]] else task$data(cols = date_col)[[1]]
-  stopifnot(length(dates) == task$nrow)
+  stopifnot("dates muss dieselbe Laenge wie task$nrow haben" = length(dates) == task$nrow)
 
   unique_dates <- sort(unique(dates))
   cuts <- unique_dates[round(seq(block_range[1], block_range[2], length.out = k + 1) * length(unique_dates))]

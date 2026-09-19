@@ -25,7 +25,7 @@
 #' @param new data.table/data.frame mit Vergleichs-Zeilen (z.B. Test), gleiche Spalten wie ref
 #' @return data.table, sortiert nach p_adj_BH aufsteigend (staerkster Drift zuerst)
 run_univariate_drift_tests <- function(ref, new) {
-  stopifnot(identical(sort(names(ref)), sort(names(new))))
+  stopifnot("ref und new muessen dieselben Spaltennamen haben" = identical(sort(names(ref)), sort(names(new))))
   cols <- names(ref)
   out <- vector("list", length(cols))
   for (i in seq_along(cols)) {

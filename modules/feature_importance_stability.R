@@ -52,7 +52,7 @@ collect_importance_across_folds <- function(folds, train_fn) {
 #'   stabile Rangfolge, nahe 0 = praktisch zufaellig neu gemischt).
 pairwise_rank_correlation <- function(importance_matrix) {
   n_folds <- ncol(importance_matrix)
-  stopifnot(n_folds >= 2)
+  stopifnot("mindestens 2 Folds noetig fuer einen paarweisen Vergleich" = n_folds >= 2)
   combs <- utils::combn(n_folds, 2)
   rows <- lapply(seq_len(ncol(combs)), function(j) {
     a <- combs[1, j]; b <- combs[2, j]
@@ -72,7 +72,7 @@ pairwise_rank_correlation <- function(importance_matrix) {
 #'   Top-k-Mengen in jedem Fold-Paar, 0 = keine Ueberschneidung).
 pairwise_topk_overlap <- function(importance_matrix, k = 10) {
   n_folds <- ncol(importance_matrix)
-  stopifnot(n_folds >= 2)
+  stopifnot("mindestens 2 Folds noetig fuer einen paarweisen Vergleich" = n_folds >= 2)
   k <- min(k, nrow(importance_matrix))
   topk_sets <- lapply(seq_len(n_folds), function(i)
     names(sort(importance_matrix[, i], decreasing = TRUE))[seq_len(k)])

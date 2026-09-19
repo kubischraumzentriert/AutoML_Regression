@@ -34,7 +34,11 @@
 #'   sowie `lower_tau`/`upper_tau` zur Dokumentation.
 train_quantile_learners <- function(task, train_rows, lower_tau = 0.05, upper_tau = 0.95,
                                      num_iterations = 300) {
-  stopifnot(lower_tau < upper_tau, lower_tau > 0, lower_tau < 1, upper_tau > 0, upper_tau < 1)
+  stopifnot(
+    "lower_tau muss kleiner als upper_tau sein" = lower_tau < upper_tau,
+    "lower_tau muss im Bereich (0, 1) liegen" = lower_tau > 0 && lower_tau < 1,
+    "upper_tau muss im Bereich (0, 1) liegen" = upper_tau > 0 && upper_tau < 1
+  )
   make_q <- function(tau) {
     lr <- make_encoded_imputed_learner(mlr3::lrn("regr.lightgbm", objective = "quantile",
                                                  alpha = tau, num_iterations = num_iterations))

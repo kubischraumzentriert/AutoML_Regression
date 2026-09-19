@@ -53,7 +53,7 @@ suppressPackageStartupMessages(library(data.table))
 #'   des langsamen `frollapply(..., sd)`.
 add_regular_lags <- function(dt, entity, time, value, lags = integer(0),
                               roll_windows = list()) {
-  stopifnot(all(c(entity, time, value) %in% names(dt)))
+  stopifnot("entity/time/value muessen alle Spalten von dt sein" = all(c(entity, time, value) %in% names(dt)))
   out <- copy(as.data.table(dt))
   setorderv(out, c(entity, time))
 
@@ -65,7 +65,10 @@ add_regular_lags <- function(dt, entity, time, value, lags = integer(0),
   for (nm in names(roll_windows)) {
     from <- roll_windows[[nm]][1]
     width <- roll_windows[[nm]][2]
-    stopifnot(from >= 1L, width >= 1L)
+    stopifnot(
+      "roll_windows[[nm]][1] (from) muss >= 1 sein" = from >= 1L,
+      "roll_windows[[nm]][2] (width) muss >= 1 sein" = width >= 1L
+    )
     mean_col <- paste0(value, "_roll_mean_", nm)
     sd_col <- paste0(value, "_roll_sd_", nm)
 

@@ -78,9 +78,10 @@ lightgbm_oof <- make_oof_predictions(make_selected_lightgbm, "LightGBM")
 catboost_oof <- make_oof_predictions(make_catboost, "CatBoost")
 
 stopifnot(
-  !anyNA(lightgbm_oof$response), !anyNA(catboost_oof$response),
-  identical(lightgbm_oof$row_id, catboost_oof$row_id),
-  identical(lightgbm_oof$fold, catboost_oof$fold)
+  "LightGBM-OOF-Vorhersagen duerfen keine NA enthalten" = !anyNA(lightgbm_oof$response),
+  "CatBoost-OOF-Vorhersagen duerfen keine NA enthalten" = !anyNA(catboost_oof$response),
+  "LightGBM und CatBoost muessen dieselben row_ids (Reihenfolge) haben" = identical(lightgbm_oof$row_id, catboost_oof$row_id),
+  "LightGBM und CatBoost muessen dieselbe Fold-Zuordnung haben" = identical(lightgbm_oof$fold, catboost_oof$fold)
 )
 
 weights <- seq(0, 1, by = 0.05)

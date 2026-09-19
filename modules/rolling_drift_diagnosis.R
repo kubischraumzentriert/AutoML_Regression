@@ -28,7 +28,10 @@
 #' @return Integer-Vektor `window_id` (1 = chronologisch fruehestes
 #'   Fenster, `k` = spaetestes), gleiche Laenge/Reihenfolge wie `time`.
 assign_time_windows <- function(time, k) {
-  stopifnot(k >= 2, k <= length(time))
+  stopifnot(
+    "k (Anzahl Fenster) muss mindestens 2 sein" = k >= 2,
+    "k darf nicht groesser als die Anzahl Zeilen sein" = k <= length(time)
+  )
   ord <- order(time)
   window_id <- integer(length(time))
   window_id[ord] <- ceiling(seq_along(ord) / (length(ord) / k))
@@ -58,7 +61,7 @@ assign_time_windows <- function(time, k) {
 #'   alle Features, NA-Faelle ausgeschlossen).
 rolling_univariate_drift <- function(dt, window_id, feature_cols, reference_window = 1L, alpha = 0.05) {
   dt <- data.table::as.data.table(dt)
-  stopifnot(reference_window %in% window_id)
+  stopifnot("reference_window muss ein tatsaechlich vorkommender window_id-Wert sein" = reference_window %in% window_id)
   ref <- dt[window_id == reference_window, feature_cols, with = FALSE]
   other_windows <- sort(unique(window_id[window_id != reference_window]))
 

@@ -67,7 +67,10 @@
 #' @return Liste mit Diagnosefeldern (siehe `verdict` fuer die Kurzfassung).
 diagnose_missingness_mechanism <- function(dt, feature, target_col, other_cols = NULL,
                                             alpha = 0.05, min_effect_size = NULL) {
-  stopifnot(feature %in% names(dt), target_col %in% names(dt))
+  stopifnot(
+    "feature muss eine Spalte von dt sein" = feature %in% names(dt),
+    "target_col muss eine Spalte von dt sein" = target_col %in% names(dt)
+  )
   dt <- data.table::as.data.table(dt)
   missing_ind <- is.na(dt[[feature]])
   n <- nrow(dt)
