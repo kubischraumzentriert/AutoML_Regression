@@ -305,9 +305,14 @@ add_log_offset <- function(task, offset_col_name) {
   # als normales Feature.
   task_with_offset$set_col_roles(offset_col_name, roles = character(0))
 
-  stopifnot(!log_offset_col %in% task_with_offset$feature_names,
-            !offset_col_name %in% task_with_offset$feature_names,
-            identical(task_with_offset$col_roles$offset, log_offset_col))
+  stopifnot(
+    "Log-Offset-Spalte darf nicht als normales Feature stehen bleiben" =
+      !log_offset_col %in% task_with_offset$feature_names,
+    "Rohe Exposure-Spalte darf nicht als normales Feature stehen bleiben (Doppelnutzung als Offset UND Feature)" =
+      !offset_col_name %in% task_with_offset$feature_names,
+    "offset-Spaltenrolle wurde nicht korrekt gesetzt" =
+      identical(task_with_offset$col_roles$offset, log_offset_col)
+  )
   task_with_offset
 }
 
