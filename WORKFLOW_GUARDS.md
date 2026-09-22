@@ -457,7 +457,19 @@ darauf stossen:
   RMSE ableiten, nicht den Default uebernehmen) UND alle Objectives mit
   demselben, ausreichend GROSSEN Iterationsbudget vergleichen - sonst
   ist der Vergleich nicht aussagekraeftig, egal in welche Richtung er
-  ausfaellt.
+  ausfaellt. **2. Projekt-Zeuge (2026-09-22, `openml-allstate-claims-
+  severity/034_robust_loss_functions.R`, i.i.d. Versicherungsschaeden
+  statt Panel-Last)**: dieselbe Falle repliziert - Huber mit
+  Default-alpha=0.9 klar schlechter als L2 (RMSE-Ratio 9.21, MAE-Ratio
+  19.92, weit ueber der |ratio|>2-Schwelle), waehrend skaliertes alpha
+  (~1954, aus der Fold-1-L2-Referenz-RMSE) RMSE-neutral bleibt. Bestaetigt
+  die Falle als generisches LightGBM-Verhalten, NICHT projektspezifisch.
+  Anders als beim 1. Zeugen (dort bei ausreichendem Budget praktisch kein
+  Unterschied): hier verbessert skaliertes Huber UND Quantile-Median die
+  MAE leicht, aber messbar (Ratio -2.50 bzw. -3.50) bei neutraler RMSE -
+  bei sehr extremer Rechtsschiefe (Skewness 3.79, Range-Faktor ~180.000x)
+  kann ein robuster Loss also doch einen kleinen echten MAE-Vorteil
+  bringen, wenn MAE die Zielmetrik ist. Details: `BACKLOG.md` Kandidat 30.
 
 ## Nicht automatisieren
 
