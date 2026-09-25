@@ -8,9 +8,6 @@ suppressPackageStartupMessages({
 })
 
 source("000_config.R")
-source(file.path(project_dir, "005_benchmark_runtime.R"))
-source(file.path(project_dir, "040_preprocessing.R"))
-source(file.path(project_dir, "db_logging.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
@@ -18,6 +15,15 @@ dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
 if (!file.exists(task_train_small_path)) {
   source(file.path(project_dir, "020_task.R"))
 }
+
+# NACH dem 020_task.R-Fallback sourcen: 020_task.R beginnt mit
+# rm(list = ls()) (und resourct nur 000_config.R selbst) - jede andere
+# Datei, die VOR diesem Block gesourct wird, wuerde bei fehlendem
+# task_train_small.rds sofort wieder geloescht (Reibungsfund
+# beijing-air-quality-panel, siehe MLR3_Regression/BACKLOG.md).
+source(file.path(project_dir, "005_benchmark_runtime.R"))
+source(file.path(project_dir, "040_preprocessing.R"))
+source(file.path(project_dir, "db_logging.R"))
 
 task_train_small <- readRDS(task_train_small_path)
 
