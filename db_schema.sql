@@ -149,6 +149,39 @@ CREATE TABLE IF NOT EXISTS prediction_prob (
   pprob_value REAL NOT NULL
 );
 
+-- Geplante Experimente (PyExperimenter-inspiriert, aus MLR3_Classifikation
+-- zurueckgefuehrt, siehe dortiges docs/research/JOSS_TECHNIQUE_WATCH.md
+-- Kandidat 4 und modules/experiment_planner.R): eine "was ist noch offen/
+-- veraltet"-Ebene VOR dem eigentlichen run. Anlass war ein konkreter
+-- Reibungsfall (PredictingElectricVehiclePurchases-s6e9, Klassifikations-
+-- Template): nach einer Umstellung von 10%-Subset auf volle Datenmenge
+-- wurde ein Tuning-Arm nie erneut ausgefuehrt, waehrend ein anderer
+-- korrekt neu getunt wurde - ein Konfigurationswechsel, der sich nicht
+-- zuverlaessig ueber alle Arme verbreitete. pexp_config_hash traegt genau
+-- das: aendert sich der Hash der fuer ein Label relevanten Config
+-- (Datensatz/Feature-Set/Parameter), OHNE dass neu geplant/ausgefuehrt
+-- wurde, erkennt db_plan_experiment() das und markiert den bestehenden
+-- Eintrag als 'stale' statt ihn unbemerkt veraltet zu lassen.
+-- pexp_run_id bleibt NULL, solange nichts ausgefuehrt wurde (kein Pflicht-
+-- FK-Zwang wie bei run/model_config) - erst db_complete_experiment()
+-- verknuepft den tatsaechlichen run.
+CREATE TABLE IF NOT EXISTS planned_experiment (
+  pexp_seq INTEGER PRIMARY KEY,
+  pexp_id TEXT NOT NULL UNIQUE,
+  pexp_proj_id TEXT NOT NULL REFERENCES project (proj_id),
+  pexp_label TEXT NOT NULL,
+  pexp_script TEXT,
+  pexp_config_hash TEXT,
+  pexp_priority TEXT NOT NULL DEFAULT 'medium' CHECK (pexp_priority IN ('low', 'medium', 'high')),
+  pexp_status TEXT NOT NULL DEFAULT 'planned' CHECK (pexp_status IN ('planned', 'running', 'done', 'stale', 'skipped', 'failed')),
+  pexp_run_id TEXT REFERENCES run (run_id),
+  pexp_seed INTEGER,
+  pexp_notes TEXT,
+  pexp_created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  pexp_updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (pexp_proj_id, pexp_label)
+);
+
 CREATE INDEX IF NOT EXISTS idx_workflow_proj ON workflow (wf_proj_id);
 CREATE INDEX IF NOT EXISTS idx_run_wf ON run (run_wf_id);
 CREATE INDEX IF NOT EXISTS idx_run_config_run ON run_config (rconf_run_id);
@@ -162,6 +195,8 @@ CREATE INDEX IF NOT EXISTS idx_prediction_mconf ON prediction (pred_mconf_id);
 CREATE INDEX IF NOT EXISTS idx_prediction_rsmp ON prediction (pred_rsmp_id);
 CREATE INDEX IF NOT EXISTS idx_prediction_row ON prediction (pred_row_id);
 CREATE INDEX IF NOT EXISTS idx_prediction_prob_pred ON prediction_prob (pprob_pred_seq);
+CREATE INDEX IF NOT EXISTS idx_planned_experiment_proj ON planned_experiment (pexp_proj_id);
+CREATE INDEX IF NOT EXISTS idx_planned_experiment_status ON planned_experiment (pexp_status);
 
 -- Views ----------------------------------------------------------------
 -- v_model_results: eine Zeile je model_config mit aggregierten BAcc/MCC-
@@ -369,3 +404,28 @@ JOIN model_config mc ON mc.mconf_id = sr.subm_mconf_id
 JOIN run r ON r.run_id = mc.mconf_run_id
 JOIN workflow wf ON wf.wf_id = r.run_wf_id
 JOIN project p ON p.proj_id = wf.wf_proj_id;
+
+-- v_planned_experiments: geplante/veraltete/laufende Experimente mit
+-- Projektname statt proj_id, sortiert nach Prioritaet - der direkte
+-- Einstieg fuer "was ist offen?" (siehe experiment_planner.R,
+-- report_planned_experiments()).
+DROP VIEW IF EXISTS v_planned_experiments;
+CREATE VIEW v_planned_experiments AS
+SELECT
+  p.proj_name,
+  pe.pexp_id,
+  pe.pexp_label,
+  pe.pexp_script,
+  pe.pexp_config_hash,
+  pe.pexp_priority,
+  pe.pexp_status,
+  pe.pexp_run_id,
+  pe.pexp_seed,
+  pe.pexp_notes,
+  pe.pexp_created_at,
+  pe.pexp_updated_at
+FROM planned_experiment pe
+JOIN project p ON p.proj_id = pe.pexp_proj_id
+ORDER BY
+  CASE pe.pexp_priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END,
+  pe.pexp_created_at;

@@ -14,6 +14,7 @@ source("000_config.R")
 source(file.path(project_dir, "005_benchmark_runtime.R"))
 source(file.path(project_dir, "040_preprocessing.R"))
 source(file.path(project_dir, "db_logging.R"))
+source(file.path(project_dir, "modules", "experiment_planner.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
@@ -23,6 +24,28 @@ if (!file.exists(task_train_small_path)) {
 }
 
 task_train_small <- readRDS(task_train_small_path)
+
+# Experiment-Planung (aus MLR3_Classifikation zurueckgefuehrt, siehe
+# docs/research/JOSS_TECHNIQUE_WATCH.md dort Kandidat 4 und
+# modules/experiment_planner.R hier): der Config-Hash faengt einen stillen
+# Konfigurationsdrift ab (z.B. subset_fraction/Feature-Engineering
+# geaendert, ohne dass dieser Arm neu getunt wurde) - aendert sich der
+# Hash gegenueber dem letzten 'done'-Lauf, markiert db_plan_experiment()
+# den Eintrag automatisch als 'stale'.
+.planner_con <- db_connect()
+.planner_proj_id <- db_get_or_create_project(.planner_con, project_name)
+.planner_pexp_id <- db_plan_experiment(
+  .planner_con, .planner_proj_id, "100_lightgbm_tuning",
+  script = "100_lightgbm_tuning.R",
+  config_hash = experiment_config_hash(task_train_small, extra = list(
+    lightgbm_tuning_evals = lightgbm_tuning_evals,
+    lightgbm_baseline_iterations = lightgbm_baseline_iterations,
+    cv_folds = cv_folds
+  )),
+  priority = "high", seed = seed
+)
+db_start_experiment(.planner_con, .planner_pexp_id)
+DBI::dbDisconnect(.planner_con)
 
 db_con <- db_connect()
 estimate_tuning_runtime(
@@ -162,6 +185,7 @@ db_log_timed_benchmark(
   resampling_strategy = "cv", resampling_folds = cv_folds, resampling_seed = seed
 )
 
+db_complete_experiment(db_con, .planner_pexp_id, db_run_id)
 db_finish_run(db_con, db_run_id)
 DBI::dbDisconnect(db_con)
 
