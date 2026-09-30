@@ -494,6 +494,30 @@ darauf stossen:
   verfuegbar (kein Seiteneffekt auf bestehende Workflows), aber noch
   nicht in eine Standard-Skript-Reihenfolge verdrahtet.
 
+- **`ti()`/`tnr("mbo")` bricht bei einer VORINSTANTIIERTEN
+  `rsmp("custom")`-Resampling reproduzierbar ab** - eine klassifikations-
+  spezifische Assertion (`Assertion on 'truth' failed: Must be of type
+  'factor', not 'character'`) tritt bei einer reinen REGRESSIONS-Aufgabe
+  auf, sobald das an `ti()` uebergebene `resampling`-Objekt bereits per
+  `$instantiate(task, train_sets=..., test_sets=...)` fest instantiiert
+  ist (fuer einen festen CHRONOLOGISCHEN Suchphasen-Split bei Zeitreihen
+  noetig, siehe `modules/time_blocked_resampling.R`). Gefunden in
+  `kaggle-mining-process-quality/102_catboost_tuning_reduced.R`, isoliert
+  bis auf ein triviales `regr.rpart` + `rsmp("custom")` nachgestellt -
+  unabhaengig von CatBoost/`po("colapply")` (beide urspruenglich
+  verdaechtigt, beide NICHT die Ursache). Ein `rsmp("holdout")` (nicht
+  vorinstantiiert, `ti()` instantiiert selbst) funktioniert dagegen
+  problemlos. **Fix**: fuer eine Zeitreihen-Suchphase KEINE `ti()`/
+  `tnr("mbo")`-Abstraktion verwenden, sondern eine manuelle Zufallssuche
+  (Parameter ziehen, direkt auf dem festen chronologischen Split
+  trainieren/bewerten, bestes Ergebnis waehlen) - bei ueberschaubarer
+  Eval-Anzahl ohnehin guenstig genug, keine Bayesian-Optimization-
+  Vorteile noetig. **STATUS: 1-Projekt-Fund, noch nicht als generischer
+  Workaround-Helfer zurueckgefuehrt** - falls der Fehler in einem
+  weiteren Projekt auftritt, lohnt sich ein `manual_random_search()`-
+  Modul (Suchraum + fester Split + Learner-Konstruktor -> bestes
+  Ergebnis) statt den Code je Projekt neu zu schreiben.
+
 ## Nicht automatisieren
 
 Diese Checks liefern Warnsignale, keine automatischen Entscheidungen. Wenn ein
