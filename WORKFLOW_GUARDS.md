@@ -471,6 +471,29 @@ darauf stossen:
   kann ein robuster Loss also doch einen kleinen echten MAE-Vorteil
   bringen, wenn MAE die Zielmetrik ist. Details: `BACKLOG.md` Kandidat 30.
 
+- **Rohdaten-Zeilenfrequenz hoeher als die Aktualisierungsfrequenz der
+  Zielspalte -> Random-Split verteilt Zeilen derselben Update-Periode in
+  Train UND Test.** Gefunden in `kaggle-mining-process-quality`
+  (BACKLOG.md Kandidat 34): Sensordaten im 20-Sekunden-Takt (737 453
+  Zeilen), aber die Labor-gemessene Zielspalte aendert sich nur
+  STUENDLICH - 93,9% aller Zeilen hatten denselben Zielwert wie die
+  unmittelbar vorherige Zeile. Ein bekannter, in oeffentlichen Kaggle-
+  Kernels haeufig unbemerkter Leak-Fallstrick bei Sensor-/Prozessdaten
+  mit periodisch aktualisierten Labor-/Batch-Messwerten - die interne CV
+  sieht dann kuenstlich gut aus (Interpolation innerhalb bekannter
+  Update-Perioden), ohne dass ein Feature selbst "leakt". **Fix**: vor
+  jeder Split-Entscheidung `check_label_update_frequency()`/
+  `report_label_update_frequency()` (neu, `modules/label_update_
+  frequency.R`) aufrufen - warnt, wenn >50% der Zeilen denselben
+  Zielwert wie die Vorzeile haben, und zeigt per Lauflaengen-
+  Zusammenfassung die typische Update-Periode. Bei Mining Process:
+  Aggregation auf Stundenaufloesung (737k -> 4097 Zeilen) macht das
+  Problem durch Konstruktion unmoeglich, statt es nur per Resampling-
+  Strategie zu umgehen. **STATUS: 1-Projekt-Kandidat, ADR-003-Backport
+  offen** (2. unabhaengiges Projekt fehlt) - Funktion bereits additiv
+  verfuegbar (kein Seiteneffekt auf bestehende Workflows), aber noch
+  nicht in eine Standard-Skript-Reihenfolge verdrahtet.
+
 ## Nicht automatisieren
 
 Diese Checks liefern Warnsignale, keine automatischen Entscheidungen. Wenn ein
