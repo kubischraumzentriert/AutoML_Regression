@@ -19,12 +19,37 @@ nicht, sondern hilft nur beim schnellen Einordnen.
 |---|---|---|
 | `composition_reweighting.R` | Label-freie Diagnose, ob eine CV↔Test-/LB-Lücke ein reiner Kompositionseffekt ist | `test_composition_reweighting.R` |
 | `univariate_drift.R` | Statistische Train-vs-Test-Drift-Tests je Spalte (Ergänzung zur Adversarial Validation) | `018_adversarial_validation.R`, `missingness_mechanism_audit.R`, `rolling_drift_diagnosis.R` |
-| `missingness_mechanism_audit.R` | Ist Fehlen in einem Feature informativ (MCAR/MAR/MNAR-artig), statt naiv zu imputieren? | `test_missingness_mechanism_audit.R`; real angewendet in `ML_Learning/beijing-air-quality-panel`, `ML_Learning/openml-house-prices-regression` |
+| `missingness_mechanism_audit.R` | Ist Fehlen in einem Feature informativ (MCAR/MAR/MNAR-artig, siehe Kasten unten), statt naiv zu imputieren? | `test_missingness_mechanism_audit.R`; real angewendet in `ML_Learning/beijing-air-quality-panel`, `ML_Learning/openml-house-prices-regression`, `ML_Learning/openml-aps-failure-scania` (Klassifikations-Template) |
 | `rolling_drift_diagnosis.R` | Concept-Drift über MEHRERE Zeitperioden statt nur Train-vs-Test | `test_rolling_drift_diagnosis.R` |
 | `feature_importance_stability.R` | Ist die Gain-Importance-Rangfolge über Folds/Seeds stabil, oder Rauschen eines Einzellaufs? | `test_feature_importance_stability.R` |
 | `sanity_checks.R` | Perturbations-/Invarianz-/Directional-Expectation-Checks (Huyen 2022) | `126_sanity_checks.R` |
 | `paired_fold_comparison.R` | Generischer Helfer für "paired same-folds"-Vergleiche (jede Variante auf denselben Folds messen) | `test_paired_fold_comparison.R` |
 | `group_resampling.R` | Group-aware Resampling für Aufgaben mit wiederholten Entitäten (Generalisierung auf NEUE Gruppen) | projektspezifisch (kein Default-Skript, opt-in) |
+
+**MCAR/MAR/MNAR** (fehlende Werte, drei klassische Kategorien -
+Referenzpunkt für alle Fundstellen, die die Begriffe nur noch verwenden,
+z.B. `BACKLOG.md`/Projekt-READMEs; volle Herleitung inkl. Grenzen im
+Kopfkommentar von `missingness_mechanism_audit.R`):
+
+- **MCAR** (Missing Completely At Random) - Fehlen ist reiner Zufall,
+  unabhängig von allem. Naive Imputation (Median/Modus) ist unbedenklich.
+- **MAR** (Missing At Random) - Fehlen hängt von ANDEREN beobachteten
+  Features ab (z.B. "Sensor X fällt bei Regen häufiger aus"). Median-
+  Imputation verzerrt dann bedingte Zusammenhänge.
+- **MNAR** (Missing Not At Random) - Fehlen hängt vom (unbeobachteten)
+  WERT der Spalte selbst oder vom ZIEL ab (z.B. "hohe Werte werden
+  seltener gemessen", oder ein Sensor liest bei einem sich anbahnenden
+  Defekt anders/gar nicht aus). Der gefährlichste Fall - naive
+  Imputation kann hier systematische Verzerrung ins Modell einbauen,
+  weil das Fehlen selbst eine Information trägt, die dabei verloren
+  geht.
+
+`missingness_mechanism_audit.R` kann MCAR nicht sauber von MNAR-durch-
+den-eigenen-Wert unterscheiden (der eigene, unbeobachtete Wert ist per
+Definition nicht prüfbar) - es prüft stattdessen zwei indirekte Signale:
+hängt das Fehlen mit dem ZIEL zusammen (Hinweis auf MNAR bzgl. des
+Ziels) und/oder mit ANDEREN Features (Hinweis auf MAR)? Zeigt keines der
+beiden ein Signal, ist das konsistent mit MCAR (kein Beweis).
 
 ## Panel-/Forecasting-spezifisch (opt-in, nur bei Entity+Zeit-Daten)
 
